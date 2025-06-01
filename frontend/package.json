@@ -1,5 +1,5 @@
 {
-  "name": "shards-dashboard-lite-react",
+  "name": "frontend",
   "version": "1.0.0",
   "private": true,
   "homepage": "./",
@@ -21,10 +21,9 @@
     "shortid": "^2.2.14"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build:prod": "cross-env REACT_APP_BASENAME=/demo/shards-dashboard-lite-react REACT_APP_GAID=UA-115105611-1 npm run build",
-    "build": "cross-env REACT_APP_BASENAME=/demo/shards-dashboard-lite-react react-scripts build",
-    "test": "react-scripts test",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider cross-env REACT_APP_BASENAME=/dev/frontend react-scripts build",
+    "test": "NODE_OPTIONS=--openssl-legacy-provider react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
