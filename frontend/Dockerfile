@@ -2,14 +2,22 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Copy hanya file yang dibutuhkan untuk menginstal dependensi terlebih dahulu
+# Salin file dependency terlebih dahulu agar cache build bisa dimanfaatkan
 COPY package*.json ./
 
-# Install dependensi lebih dulu untuk memanfaatkan layer caching
-RUN npm install
+# Install build tools & dependencies
+RUN apk add --no-cache python3 make g++ \
+    && npm install \
+    && apk del make g++
 
-# Copy semua source code
+# Salin semua source code ke image
 COPY . .
+
+# Set Python untuk environment jika dibutuhkan oleh dependensi native
+ENV PYTHON=python3
+
+# Atasi error openssl pada Node 17+
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 # Build aplikasi React
 RUN npm run build
@@ -17,17 +25,17 @@ RUN npm run build
 # Tahap Production
 FROM nginx:alpine
 
-# Hapus default konfigurasi nginx jika ada
+# Hapus konfigurasi default Nginx
 RUN rm -rf /etc/nginx/conf.d/default.conf
 
-# (Opsional) Copy custom nginx config jika kamu menggunakan React Router (SPA)
+# (Opsional) Salin custom konfigurasi nginx jika diperlukan (SPA, React Router, dll)
 # COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Salin hasil build React ke direktori html nginx
+# Salin hasil build dari tahap builder
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Expose port
+# Expose port 80
 EXPOSE 80
 
-# Jalankan nginx dalam mode foreground
+# Jalankan nginx
 CMD ["nginx", "-g", "daemon off;"]
