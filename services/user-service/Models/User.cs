@@ -1,4 +1,4 @@
-namespace UserService.Models
+namespace FrameworkX.Services.Users.Models
 {
     public class User
     {

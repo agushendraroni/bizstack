@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using UserService.Data;
-using UserService.Services;
+using FrameworkX.Services.Users.Data;
+using FrameworkX.Services.Users.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +15,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Register IUserService dan implementasinya
+// Register IUsersService dan implementasinya
 builder.Services.AddScoped<IUsersService, UsersService>();
+
 
 // JWT Configuration
 string jwtSecret = "your_super_secret_key_123!";
@@ -80,7 +81,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service API v1");
+        options.RoutePrefix = string.Empty; // <-- Tambahkan ini agar Swagger UI di root
+    });
 }
 
 app.UseAuthentication();

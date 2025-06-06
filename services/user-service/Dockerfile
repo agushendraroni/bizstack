@@ -1,15 +1,17 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview AS base
 WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
+WORKDIR /src
 
 COPY *.csproj ./
 RUN dotnet restore
 
-COPY . ./
-RUN dotnet publish -c Release -o out
+COPY . .
+RUN dotnet build -c Release -o /app/build
+RUN dotnet publish -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
+FROM base AS final
 WORKDIR /app
-COPY --from=build /app/out ./
-
-EXPOSE 80
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "user-service.dll"]

@@ -18,10 +18,15 @@ builder.Services.AddAuthentication().AddJwtBearer();
 var app = builder.Build();
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Auth Service API v1");
+    options.RoutePrefix = string.Empty; // Agar Swagger UI tampil di root (localhost:5282/)
+});
 
 app.UseRouting();
+app.UseAuthentication(); // <-- Tambahkan ini sebelum UseAuthorization
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
