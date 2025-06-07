@@ -1,7 +1,7 @@
 
 
 
-namespace FrameworkX.Services.GraphQLGateway.Types
+namespace GraphQLGateway.Types
 {   
 
 

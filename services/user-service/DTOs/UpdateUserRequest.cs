@@ -1,4 +1,4 @@
-namespace FrameworkX.Services.Users.DTOs
+namespace Users.DTOs
 {
     public class UpdateUserRequest
     {

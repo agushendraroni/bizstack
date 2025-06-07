@@ -1,6 +1,6 @@
-using FrameworkX.Services.Users.Models;
+using Users.Models;
 
-namespace FrameworkX.Services.Users.Services
+namespace Users.Services
 {
     public interface IUsersService
     {

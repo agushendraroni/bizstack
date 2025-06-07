@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using FrameworkX.Services.GraphQLGateway.Types;
+using GraphQLGateway.Types;
 using HotChocolate;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 
 
-namespace FrameworkX.Services.GraphQLGateway.Queries
+namespace GraphQLGateway.Queries
 {
     public class UserQuery
     {

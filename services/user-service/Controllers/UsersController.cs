@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using FrameworkX.Services.Users.Services;
-using FrameworkX.Services.Users.Models;
-using FrameworkX.Services.Users.DTOs;
+using Users.Services;
+using Users.Models;
+using Users.DTOs;
 
 
-namespace FrameworkX.Services.Users.Controllers
+namespace Users.Controllers
 {
     [ApiController]
     [Route("api/users")]

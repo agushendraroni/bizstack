@@ -1,6 +1,6 @@
-using FrameworkX.Services.GraphQLGateway.Queries;
-using FrameworkX.Services.GraphQLGateway.Queryplan;
-using FrameworkX.Services.GraphQLGateway.Types;
+using GraphQLGateway.Queries;
+using GraphQLGateway.Queryplan;
+using GraphQLGateway.Types;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

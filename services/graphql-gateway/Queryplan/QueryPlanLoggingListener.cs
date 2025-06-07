@@ -4,7 +4,7 @@ using HotChocolate.Language;
 using Microsoft.Extensions.Logging;
 using System;
 
-namespace FrameworkX.Services.GraphQLGateway.Queryplan
+namespace GraphQLGateway.Queryplan
 {
     public class QueryPlanLoggingListener : ExecutionDiagnosticEventListener
     {

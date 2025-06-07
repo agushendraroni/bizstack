@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using FrameworkX.Services.Users.Data;
-using FrameworkX.Services.Users.Services;
+using Users.Data;
+using Users.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

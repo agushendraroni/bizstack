@@ -1,11 +1,11 @@
-using FrameworkX.Services.Users.Data;
-using FrameworkX.Services.Users.Models;
+using Users.Data;
+using Users.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace FrameworkX.Services.Users.Services
+namespace Users.Services
 {
     public class UsersService : IUsersService
     {

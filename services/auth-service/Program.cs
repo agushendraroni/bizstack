@@ -1,32 +1,69 @@
 using AuthService.Data;
-using AuthService.Services;
+using AuthService.Helpers;
+using AuthService.Services.Interfaces;
+using AuthService.Services.Implementations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- Services ---
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+// --- Register IHttpContextAccessor ---
+builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddScoped<IAuthService, AuthService.Services.AuthService>();
+// --- Register AuthDbContext with audit support ---
+builder.Services.AddScoped<AuthDbContext>(provider =>
+{
+    var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
+    var user = httpContextAccessor.HttpContext?.User;
 
-builder.Services.AddAuthentication().AddJwtBearer();
+    var username = user?.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(user.Identity.Name)
+        ? user.Identity.Name
+        : "system"; // fallback default
+
+    var options = provider.GetRequiredService<DbContextOptions<AuthDbContext>>();
+    return new AuthDbContext(options, username);
+});
+// --- AuthService ---
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddAutoMapper(typeof(Program));
+// --- JWT Authentication ---
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "your-secret-key"))
+        };
+    });
 
 var app = builder.Build();
 
+// --- Middleware ---
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Auth Service API v1");
-    options.RoutePrefix = string.Empty; // Agar Swagger UI tampil di root (localhost:5282/)
+    options.RoutePrefix = string.Empty;
 });
 
 app.UseRouting();
-app.UseAuthentication(); // <-- Tambahkan ini sebelum UseAuthorization
+
+app.UseAuthentication(); // JWT
 app.UseAuthorization();
+
 app.MapControllers();
 
 await app.RunAsync();
