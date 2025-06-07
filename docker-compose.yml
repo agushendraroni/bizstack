@@ -49,6 +49,22 @@ services:
     depends_on:
       - n8n
 
+  graphql-gateway:
+    build:
+      context: ./services/graphql-gateway
+      dockerfile: Dockerfile
+    container_name: frameworkx-graphql-gateway
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # Tambahkan connection string atau variable environment lain jika diperlukan
+    ports:
+      - "5000:5000"
+    depends_on:
+      - n8n
+      - auth-service
+      - user-service
+
   frontend:
     build:
       context: ./frontend
@@ -61,7 +77,7 @@ services:
       - n8n
       - auth-service
       - user-service
+      - graphql-gateway
 
 volumes:
   n8n_data:
-

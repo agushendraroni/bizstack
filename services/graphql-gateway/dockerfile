@@ -1,0 +1,26 @@
+# Stage 1: Build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /app
+
+# Copy csproj dan restore dependencies dulu biar caching lebih optimal
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy semua file source code ke container
+COPY . ./
+
+# Build aplikasi dengan konfigurasi Release
+RUN dotnet publish -c Release -o out
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /app
+
+# Copy hasil publish dari stage build
+COPY --from=build /app/out ./
+
+# Expose port default aplikasi
+EXPOSE 5000
+
+# Entry point menjalankan aplikasi
+ENTRYPOINT ["dotnet", "graphql-gateway.dll"]

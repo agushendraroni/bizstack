@@ -78,16 +78,13 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service API v1");
-        options.RoutePrefix = string.Empty; // <-- Tambahkan ini agar Swagger UI di root
-    });
-}
-
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service API v1");
+    options.RoutePrefix = string.Empty; // agar bisa diakses langsung di root
+});
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 

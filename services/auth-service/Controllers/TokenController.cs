@@ -45,6 +45,6 @@ namespace AuthService.Controllers
 
     public class TokenRequest
     {
-        public string ServiceName { get; set; }
+        public string? ServiceName { get; set; }
     }
 }
