@@ -1,6 +1,6 @@
 
 using System.ComponentModel.DataAnnotations;
-using AuthService.Models.Base;
+using SharedLibrary.Entities;
 
 namespace AuthService.Models
 {

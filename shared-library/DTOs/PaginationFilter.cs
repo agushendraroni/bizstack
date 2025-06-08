@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AuthService.DTOs.Common;
+namespace SharedLibrary.DTOs;
 
 public class PaginationFilter
 {

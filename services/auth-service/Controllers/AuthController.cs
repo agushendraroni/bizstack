@@ -55,11 +55,15 @@ public class AuthController : ControllerBase
     public IActionResult Me()
     {
         var nameIdentifierClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var roleClaims = User.FindAll("RoleId").Select(c => int.Parse(c.Value)).ToList();
+
         return Ok(new
         {
             Id = nameIdentifierClaim != null ? int.Parse(nameIdentifierClaim.Value) : 0,
-            Username = User.Identity != null ? User.Identity.Name : null,
-            CompanyId = User.FindFirst("company_id")?.Value
+            Username = User.Identity?.Name,
+            CompanyId = User.FindFirst("CompanyId")?.Value,
+            RoleIds = roleClaims
         });
     }
+
 }

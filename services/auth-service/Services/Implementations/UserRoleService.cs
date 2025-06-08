@@ -4,7 +4,7 @@ using AuthService.Data;
 using AuthService.Models;
 using AuthService.DTOs.UserRole;
 using AuthService.Services.Interfaces;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 
 namespace AuthService.Services.Implementations
 {

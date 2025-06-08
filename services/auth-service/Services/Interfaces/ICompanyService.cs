@@ -1,5 +1,5 @@
 using AuthService.DTOs.Company;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 
 namespace AuthService.Interfaces
 {

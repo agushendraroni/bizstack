@@ -1,5 +1,5 @@
 using AuthService.Data;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 using AuthService.DTOs.Permission;
 using AuthService.Models;
 using AuthService.Services.Interfaces;

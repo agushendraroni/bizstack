@@ -1,6 +1,6 @@
 using AuthService.Data;
 using AuthService.DTOs.Menu;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 using AuthService.Interfaces;
 using AuthService.Models;
 using AutoMapper;

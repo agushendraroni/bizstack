@@ -1,6 +1,6 @@
 // ==========================
 // Service Interface (IUserRoleService.cs)
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 using AuthService.DTOs.UserRole;
 namespace AuthService.Services.Interfaces;
 public interface IUserRoleService

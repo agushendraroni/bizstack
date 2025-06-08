@@ -3,7 +3,7 @@ using AuthService.Services.Interfaces;
 using AuthService.DTOs;
 using AuthService.Helpers;
 using AuthService.DTOs.RolePermission;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 
 namespace AuthService.Controllers
 {

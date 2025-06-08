@@ -1,4 +1,4 @@
-using AuthService.Models.Base;
+using SharedLibrary.Entities;
 
 namespace AuthService.Models
 {

@@ -1,10 +1,10 @@
 using AuthService.Data;
-using AuthService.DTOs.Common;
 using AuthService.DTOs.UserPermission;
 using AuthService.Models;
 using AuthService.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using SharedLibrary.DTOs;
 
 namespace AuthService.Services.Implementations
 {

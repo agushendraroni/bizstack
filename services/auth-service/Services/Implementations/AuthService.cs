@@ -1,23 +1,28 @@
-
 namespace AuthService.Services.Implementations;
 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using AuthService.DTOs.Auth;
-using global::AuthService.Data;
-using global::AuthService.Helpers;
-using global::AuthService.Models;
 using Microsoft.EntityFrameworkCore;
+using AuthService.DTOs.Auth;
+using AuthService.Data;
+using AuthService.Models;
+using SharedLibrary.Security;
+using SharedLibrary.Security.JWT;
+using SharedLibrary.Security.Password;
+using System.Security.Claims;
 
 public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizationService
 {
     private readonly AuthDbContext _context;
-    // Removed field for static JwtService
+    private readonly IJwtTokenService _jwtService;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public AuthorizationService(AuthDbContext context)
+    public AuthorizationService(AuthDbContext context, IJwtTokenService jwtService, IPasswordHasher passwordHasher)
     {
         _context = context;
+        _jwtService = jwtService;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
@@ -26,11 +31,24 @@ public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizati
             .Include(u => u.RefreshTokens)
             .FirstOrDefaultAsync(u => u.Username == request.Username);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials");
 
-        var accessToken = JwtService.GenerateJwtToken(user);
-        var refreshToken = JwtService.GenerateRefreshToken();
+    
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim("CompanyId", user.CompanyId.ToString())
+        };
+        claims.AddRange(user.UserRoles.Select(ur => new Claim("RoleId", ur.RoleId.ToString())));
+
+        var accessToken = _jwtService.GenerateAccessToken(claims);
+        var refreshToken = _jwtService.GenerateRefreshToken();
+        if (user.RefreshTokens == null)
+        {
+            user.RefreshTokens = new List<RefreshToken>();
+        }
         user.RefreshTokens.Add(new RefreshToken
         {
             Token = refreshToken,
@@ -59,10 +77,9 @@ public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizati
         if (rt.ExpiresAt < DateTime.UtcNow)
             throw new UnauthorizedAccessException("Refresh token expired");
 
-        // Optionally: revoke old refresh token
         user.RefreshTokens.Remove(rt);
 
-        var newRefreshToken = JwtService.GenerateRefreshToken();
+        var newRefreshToken = _jwtService.GenerateRefreshToken();
         user.RefreshTokens.Add(new RefreshToken
         {
             Token = newRefreshToken,
@@ -71,9 +88,17 @@ public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizati
 
         await _context.SaveChangesAsync();
 
+         var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim("CompanyId", user.CompanyId.ToString())
+        };
+        claims.AddRange(user.UserRoles.Select(ur => new Claim("RoleId", ur.RoleId.ToString())));
+
         return new LoginResponse
         {
-            AccessToken = JwtService.GenerateJwtToken(user),
+            AccessToken = _jwtService.GenerateAccessToken(claims),
             RefreshToken = newRefreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15)
         };
@@ -89,6 +114,5 @@ public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizati
             user.RefreshTokens.Clear();
             await _context.SaveChangesAsync();
         }
-        // Optionally, handle the case where user is not found (e.g., throw exception or log)
     }
 }

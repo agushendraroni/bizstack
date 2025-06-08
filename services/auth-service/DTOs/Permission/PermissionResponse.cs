@@ -1,5 +1,5 @@
 using AuthService.Models;
-using AuthService.Models.Base;
+using SharedLibrary.Entities;
 
 namespace AuthService.DTOs.Permission
 {

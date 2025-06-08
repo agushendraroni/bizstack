@@ -7,10 +7,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AuthService.MappingProfiles;
+using SharedLibrary.Middlewares;
+using SharedLibrary.Security.JWT;
+
+using SharedLibrary.Security.Password;
+using AuthService.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Services ---
+// --- Add Controllers & Swagger ---
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -31,11 +36,23 @@ builder.Services.AddScoped<AuthDbContext>(provider =>
     var options = provider.GetRequiredService<DbContextOptions<AuthDbContext>>();
     return new AuthDbContext(options, username);
 });
-// --- AuthService ---
-builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+
+// --- Register AutoMapper ---
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+// --- Register Internal Services ---
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+
+// --- Bind & Register JwtSettings ---
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+if (jwtSettings == null)
+    throw new InvalidOperationException("JwtSettings section is missing or invalid in configuration.");
+
+// --- Register SharedLibrary JWT Service ---
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 
 // --- JWT Authentication ---
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -43,14 +60,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "your-secret-key"))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            ClockSkew = TimeSpan.Zero
         };
     });
+
+// --- CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -62,9 +83,9 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-app.UseCors("AllowAll");
 
 // --- Middleware ---
+app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -73,10 +94,14 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseRouting();
-
-app.UseAuthentication(); // JWT
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// --- Custom Middleware ---
+app.UseExceptionHandling();
+app.UseRequestLogging();
+app.UseRequestTiming();
 
 await app.RunAsync();

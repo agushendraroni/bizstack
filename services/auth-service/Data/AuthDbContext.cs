@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using AuthService.Models;
-using AuthService.Models.Base;
+using SharedLibrary.Entities;
 
 namespace AuthService.Data
 {

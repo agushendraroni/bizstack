@@ -1,4 +1,4 @@
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 using AuthService.DTOs.Menu;
 
 namespace AuthService.Services.Interfaces

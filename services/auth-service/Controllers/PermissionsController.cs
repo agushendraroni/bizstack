@@ -1,5 +1,5 @@
 
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 using AuthService.DTOs.Permission;
 using AuthService.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;

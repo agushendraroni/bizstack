@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using AuthService.Services;
 using AuthService.Models;
 using AuthService.Services.Interfaces;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 using AuthService.DTOs.UserRole;
 
 

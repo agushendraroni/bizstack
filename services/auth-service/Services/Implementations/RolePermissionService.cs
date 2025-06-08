@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using AuthService.Data;
 using AuthService.Helpers;
 using AuthService.DTOs.RolePermission;
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 
 namespace AuthService.Services.Implementations
 {

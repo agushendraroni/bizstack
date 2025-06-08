@@ -1,4 +1,4 @@
-using AuthService.DTOs.Common;
+using SharedLibrary.DTOs;
 namespace AuthService.DTOs.RolePermission;
 public class RolePermissionFilterRequest : PaginationFilter
     {
