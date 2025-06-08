@@ -1,97 +1,145 @@
-# Auth Service - FrameworkX
+# Auth‑Service
 
-**Auth Service** merupakan bagian dari monorepo `frameworkX` yang menangani otentikasi dan otorisasi pengguna. Layanan ini dibangun menggunakan .NET dan menyediakan fitur seperti login, refresh token, manajemen role, permission, dan integrasi JWT untuk pengamanan endpoint.
+REST API untuk otentikasi & otorisasi dalam arsitektur microservices `frameworkX`.
 
-## 🚀 Fitur Utama
+## 📌 Tujuan
 
-- 🔐 JWT Authentication (Login, Refresh Token)
-- 🧑‍🤝‍🧑 Manajemen User, Role, dan Permission
-- 🧾 Audit Trail (`CreatedAt`, `ChangedAt`, `CreatedBy`, `ChangedBy`)
-- 🗑️ Soft Delete
-- 📄 Pagination, Sorting, dan Filtering Lanjutan
-- 📚 Dokumentasi Swagger
-- ✅ Unit Test Terstruktur
+Auth-Service menyediakan:
 
-## 📁 Struktur Direktori
+- Pendaftaran pengguna (signup)
+- Login dan logout
+- Manajemen token JWT (akses + refresh token)
+- Otentikasi berbasis peran (RBAC)
+- Endpoint untuk profil yang dilindungi
 
-auth-service/
-├── Controllers/         # Endpoint HTTP untuk model-model (User, Role, dsb)
-├── Dtos/                # DTO: CreateRequest, UpdateRequest, FilterRequest, Response
-├── Interfaces/          # Interface untuk service-service
-├── Models/              # Entity dan model database
-├── Services/            # Implementasi bisnis logic
-├── Middleware/          # Middleware untuk JWT
-├── Helpers/             # Helper (e.g. hashing, token generation)
-├── Extensions/          # Service injection & konfigurasi
-├── Program.cs           # Entry point aplikasi
-├── appsettings.json     # Konfigurasi aplikasi
-└── ...                  # File dan folder lainnya
+## 🚀 Fitur
 
-## ⚙️ Konfigurasi & Menjalankan
+- ASP.NET Core modern (minimal API / WebApplicationBuilder)
+- JWT untuk otentikasi
+- Refresh token otomatis
+- Integrasi Entity Framework Core + SQL Server/PostgreSQL
+- Clean Architecture: Controller → Service → Repository → Model/DTO
+- Middleware autentikasi/otorisasi
+- Swagger & API Explorer
 
-### 1. Persiapan
+## 🔧 Instalasi
 
-- Pastikan sudah menginstal:
-  - [.NET SDK 8.0+](https://dotnet.microsoft.com/)
-  - PostgreSQL (jika digunakan untuk penyimpanan)
-  - [EF Core Tools](https://learn.microsoft.com/en-us/ef/core/cli/dotnet)
+```bash
+git clone https://github.com/agushendraroni/frameworkX.git
+cd frameworkX/services/auth-service
+dotnet restore
+```
 
-### 2. Konfigurasi `appsettings.json`
+## ⚙️ Konfigurasi
 
+Tambahkan di `appsettings.Development.json` atau variabel environment:
+
+```json
 {
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=...;Database=AuthDb;User Id=...;Password=...;"
+  },
   "JwtSettings": {
-    "Secret": "your_super_secret_key",
-    "Issuer": "frameworkX-auth",
-    "Audience": "frameworkX-clients",
-    "AccessTokenExpirationMinutes": 30,
+    "Issuer": "frameworkX",
+    "Audience": "frameworkX",
+    "SecretKey": "super–secret–key–here",
+    "AccessTokenExpirationMinutes": 15,
     "RefreshTokenExpirationDays": 7
   },
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=authdb;Username=youruser;Password=yourpassword"
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
   }
 }
+```
 
-### 3. Migrasi Database
+## 🎬 Menjalankan
 
-dotnet ef database update
-
-### 4. Menjalankan Aplikasi
-
+```bash
+cd services/auth-service
 dotnet run
+```
 
-Swagger UI tersedia di:  
-https://localhost:<port>/swagger
+Swagger UI tersedia di `http://localhost:5000/swagger`.
 
-## 🛠️ Endpoint Penting
+## 🧩 Endpoints Umum
 
-| Endpoint               | Method | Deskripsi                  | Autentikasi |
-|------------------------|--------|----------------------------|-------------|
-| `/api/auth/login`      | POST   | Login dan dapatkan token   | ❌          |
-| `/api/auth/refresh`    | POST   | Refresh JWT token          | ❌          |
-| `/api/users`           | CRUD   | Manajemen user             | ✅          |
-| `/api/roles`           | CRUD   | Manajemen role             | ✅          |
-| `/api/permissions`     | CRUD   | Manajemen permission       | ✅          |
-| `/api/menus`           | CRUD   | Manajemen menu navigasi    | ✅          |
+| Method | URL                   | Deskripsi                         | Otentikasi |
+|-------:|-----------------------|----------------------------------|:----------:|
+| POST   | `/api/auth/signup`    | Daftar pengguna baru             | ❌         |
+| POST   | `/api/auth/login`     | Login & terima JWT               | ❌         |
+| POST   | `/api/auth/refresh`   | Refresh access token             | ❌         |
+| POST   | `/api/auth/logout`    | Logout & invalide refresh token  | ✅         |
+| GET    | `/api/auth/me`        | Profil pengguna saat ini         | ✅         |
 
-## 🧪 Testing
+> ✅ = memerlukan header `Authorization: Bearer <jwt>`
 
-Unit test tersedia di folder `Tests/` (jika sudah dibuat). Jalankan dengan:
+## 🏗️ Arsitektur & Struktur
 
-dotnet test
+```
+src/
+├── Controllers/       ← endpoint HTTP
+│   └── AuthController.cs
+├── Services/          ← logika bisnis
+│   └── AuthService.cs
+├── Repositories/      ← akses DB
+│   └── UserRepository.cs
+├── Models/            ← entity EF Core
+│   └── User.cs
+├── DTOs/              ← objek data transfer
+│   └── LoginRequest.cs
+├── Middleware/        ← autentikasi & otorisasi
+│   └── JwtMiddleware.cs
+├── Extensions/        ← ekstensi service dan konfigurasi
+│   └── ServiceCollectionExtensions.cs
+├── Data/
+│   └── AuthDbContext.cs
+├── Program.cs         ← bootstrap .NET 6+
+└── appsettings*.json  ← konfigurasi service
+```
 
-## 🧰 Teknologi yang Digunakan
+## ✅ Validasi & Testing
 
-- ASP.NET Core Web API
-- Entity Framework Core
-- PostgreSQL (opsional)
-- JWT Bearer Authentication
-- Swagger / Swashbuckle
-- xUnit (untuk unit test)
+- Unit test (xUnit/Moq) ada di `/tests/AuthService.Tests`
+- Pastikan:
 
-## 🤝 Kontribusi
+  - Signup menghasilkan user baru
+  - Login menerima JWT & refresh token
+  - Refresh endpoint menghasilkan token baru
+  - Logout membatalkan refresh token
+  - Endpoint `/me` hanya bisa diakses dengan JWT sah
 
-Pull request dipersilakan. Untuk perubahan besar, silakan buka *issue* terlebih dahulu untuk mendiskusikan apa yang ingin Anda ubah.
+## 📘 Dokumentasi
+
+Swagger UI: `http://localhost:5000/swagger`.  
+Contoh `curl` tersedia di deskripsi endpoint Swagger.
+
+## 🔐 Security & Best Practices
+
+- Simpan secret JWT di *Azure Key Vault* atau *AWS Secrets Manager*
+- Pastikan HTTPS selalu aktif
+- Gunakan revocation list untuk refresh token
+- Implementasi rate-limiting dan IP throttling (opsional)
+
+## 🛠️ Kustomisasi
+
+- Ganti SQL Server dengan PostgreSQL di `AuthDbContext` & `Program.cs`
+- Tambah OAuth (Google/Facebook) di `AuthService` & konfigurasi
+- Tambah role-based policy di `Program.cs` (`builder.Services.AddAuthorization(...)`)
+
+---
 
 ## 📄 Lisensi
 
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+MIT — silakan lihat file `LICENSE` untuk detail.
+
+---
+
+### 📝 Contributing
+
+1. Fork repo.
+2. Buat branch fitur: `git checkout -b fitur-deskripsi`.
+3. Commit perubahan: `git commit -m "Deskripsi perubahan"`.
+4. Push ke branch Anda: `git push origin fitur-deskripsi`.
+5. Buka pull request.
