@@ -19,6 +19,7 @@ Auth-Service menyediakan:
 - Refresh token otomatis
 - Integrasi Entity Framework Core + SQL Server/PostgreSQL
 - Clean Architecture: Controller → Service → Repository → Model/DTO
+- FluentValidation untuk validasi request
 - Middleware autentikasi/otorisasi
 - Swagger & API Explorer
 
@@ -79,28 +80,31 @@ Swagger UI tersedia di `http://localhost:5000/swagger`.
 
 ```
 src/
-├── Controllers/       ← endpoint HTTP
+├── Controllers/             ← endpoint HTTP
 │   └── AuthController.cs
-├── Services/          ← logika bisnis
+├── Services/                ← logika bisnis
 │   └── AuthService.cs
-├── Repositories/      ← akses DB
+├── Repositories/            ← akses DB
 │   └── UserRepository.cs
-├── Models/            ← entity EF Core
+├── Models/                  ← entity EF Core
 │   └── User.cs
-├── DTOs/              ← objek data transfer
+├── DTOs/                    ← objek data transfer
 │   └── LoginRequest.cs
-├── Middleware/        ← autentikasi & otorisasi
+├── Validation/              ← validasi menggunakan FluentValidation
+│   └── LoginRequestValidator.cs
+├── Middleware/              ← autentikasi & otorisasi
 │   └── JwtMiddleware.cs
-├── Extensions/        ← ekstensi service dan konfigurasi
+├── Extensions/              ← ekstensi service dan konfigurasi
 │   └── ServiceCollectionExtensions.cs
 ├── Data/
 │   └── AuthDbContext.cs
-├── Program.cs         ← bootstrap .NET 6+
-└── appsettings*.json  ← konfigurasi service
+├── Program.cs               ← bootstrap .NET 6+
+└── appsettings*.json        ← konfigurasi service
 ```
 
 ## ✅ Validasi & Testing
 
+- Validasi request menggunakan FluentValidation (misal `LoginRequestValidator`)
 - Unit test (xUnit/Moq) ada di `/tests/AuthService.Tests`
 - Pastikan:
 
@@ -112,7 +116,7 @@ src/
 
 ## 📘 Dokumentasi
 
-Swagger UI: `http://localhost:5000/swagger`.  
+Swagger UI: `http://localhost:5000/swagger`  
 Contoh `curl` tersedia di deskripsi endpoint Swagger.
 
 ## 🔐 Security & Best Practices
