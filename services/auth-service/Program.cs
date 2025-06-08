@@ -11,7 +11,15 @@ using SharedLibrary.Middlewares;
 using SharedLibrary.Security.JWT;
 
 using SharedLibrary.Security.Password;
-using AuthService.Services.Implementations;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using AuthService.Validation;
+using AuthService.Validation.Auth;
+using AuthService.Validation.Company;
+using AuthService.Validation.Menu;
+using AuthService.Validation.Permission;
+using AuthService.Validation.RolePermission;
+using AuthService.Validation.Role;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,7 +60,8 @@ if (jwtSettings == null)
 
 // --- Register SharedLibrary JWT Service ---
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 // --- JWT Authentication ---
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -5,6 +5,7 @@ using AuthService.Interfaces;
 using AuthService.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace AuthService.Services.Implementations
 {
@@ -12,11 +13,19 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateRoleRequest> _createValidator;
+        private readonly IValidator<UpdateRoleRequest> _updateValidator;
 
-        public RoleService(AuthDbContext context, IMapper mapper)
+        public RoleService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreateRoleRequest> createValidator,
+            IValidator<UpdateRoleRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<RoleResponse?> GetByIdAsync(int id)
@@ -56,6 +65,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<RoleResponse> CreateAsync(CreateRoleRequest request, string createdBy)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var role = _mapper.Map<Role>(request);
             role.CreatedAt = DateTime.UtcNow;
             role.CreatedBy = createdBy;
@@ -68,6 +81,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<RoleResponse?> UpdateAsync(int id, UpdateRoleRequest request, string updatedBy)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
             if (role == null) return null;
 

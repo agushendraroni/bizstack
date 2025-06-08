@@ -7,6 +7,7 @@ using AuthService.Data;
 using AuthService.Helpers;
 using AuthService.DTOs.RolePermission;
 using SharedLibrary.DTOs;
+using FluentValidation;
 
 namespace AuthService.Services.Implementations
 {
@@ -14,15 +15,27 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateRolePermissionRequest> _createValidator;
+        private readonly IValidator<UpdateRolePermissionRequest> _updateValidator;
 
-        public RolePermissionService(AuthDbContext context, IMapper mapper)
+        public RolePermissionService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreateRolePermissionRequest> createValidator,
+            IValidator<UpdateRolePermissionRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<RolePermissionResponse> CreateAsync(CreateRolePermissionRequest request)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = _mapper.Map<RolePermission>(request);
             _context.RolePermissions.Add(entity);
             await _context.SaveChangesAsync();
@@ -31,6 +44,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<RolePermissionResponse> UpdateAsync(UpdateRolePermissionRequest request)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = await _context.RolePermissions
                 .FirstOrDefaultAsync(x => x.RoleId == request.RoleId && x.PermissionId == request.PermissionId);
 

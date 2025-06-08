@@ -5,6 +5,8 @@ using AuthService.Models;
 using AuthService.DTOs.UserRole;
 using AuthService.Services.Interfaces;
 using SharedLibrary.DTOs;
+using FluentValidation;
+using AuthService.Validation.UserRole;
 
 namespace AuthService.Services.Implementations
 {
@@ -12,15 +14,27 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateUserRoleRequest> _createValidator;
+        private readonly IValidator<UpdateUserRoleRequest> _updateValidator;
 
-        public UserRoleService(AuthDbContext context, IMapper mapper)
+        public UserRoleService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreateUserRoleRequest> createValidator,
+            IValidator<UpdateUserRoleRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<UserRoleResponse> CreateAsync(CreateUserRoleRequest request)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var exists = await _context.UserRoles.AnyAsync(ur => ur.UserId == request.UserId && ur.RoleId == request.RoleId && !ur.IsDeleted);
             if (exists)
                 throw new InvalidOperationException("UserRole already exists.");
@@ -34,20 +48,17 @@ namespace AuthService.Services.Implementations
 
         public async Task<UserRoleResponse> UpdateAsync(int userId, int roleId, UpdateUserRoleRequest request)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = await _context.UserRoles
                 .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId && !ur.IsDeleted);
 
             if (entity is null)
                 throw new KeyNotFoundException("UserRole not found.");
 
-            // Update properties, if user wants to change UserId or RoleId, 
-            // better handle carefully, here kita anggap gak boleh update composite key
-            // Jadi hanya boleh update non-key fields, tapi di model ini gak ada
-
-            // Misal kita cuma update IsActive, etc, tapi karena gak ada, skip
-
             entity.ChangedAt = DateTime.UtcNow;
-
             await _context.SaveChangesAsync();
 
             return _mapper.Map<UserRoleResponse>(entity);

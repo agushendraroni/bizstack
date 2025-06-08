@@ -3,6 +3,7 @@ using AuthService.DTOs.UserPasswordHistory;
 using AuthService.Models;
 using AuthService.Services.Interfaces;
 using AutoMapper;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Services.Implementations
@@ -11,15 +12,27 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateUserPasswordHistoryRequest> _createValidator;
+        private readonly IValidator<UpdateUserPasswordHistoryRequest> _updateValidator;
 
-        public UserPasswordHistoryService(AuthDbContext context, IMapper mapper)
+        public UserPasswordHistoryService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreateUserPasswordHistoryRequest> createValidator,
+            IValidator<UpdateUserPasswordHistoryRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<UserPasswordHistoryResponse> CreateAsync(CreateUserPasswordHistoryRequest request)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var history = _mapper.Map<UserPasswordHistory>(request);
             _context.UserPasswordHistories.Add(history);
             await _context.SaveChangesAsync();
@@ -28,6 +41,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<UserPasswordHistoryResponse> UpdateAsync(int id, UpdateUserPasswordHistoryRequest request)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var history = await _context.UserPasswordHistories.FindAsync(id);
             if (history == null) throw new KeyNotFoundException("User password history not found");
 

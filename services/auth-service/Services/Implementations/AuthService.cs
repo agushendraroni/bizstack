@@ -11,22 +11,40 @@ using SharedLibrary.Security;
 using SharedLibrary.Security.JWT;
 using SharedLibrary.Security.Password;
 using System.Security.Claims;
+using AuthService.Validation;
+using System.ComponentModel.DataAnnotations;
+using AuthService.Validation.Auth;
+using FluentValidation;
 
 public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizationService
 {
-    private readonly AuthDbContext _context;
+     private readonly AuthDbContext _context;
     private readonly IJwtTokenService _jwtService;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IValidator<LoginRequest> _loginValidator;
+    private readonly IValidator<RefreshTokenRequest> _refreshTokenValidator;
 
-    public AuthorizationService(AuthDbContext context, IJwtTokenService jwtService, IPasswordHasher passwordHasher)
+    public AuthorizationService(
+        AuthDbContext context,
+        IJwtTokenService jwtService,
+        IPasswordHasher passwordHasher,
+        IValidator<LoginRequest> loginValidator,
+        IValidator<RefreshTokenRequest> refreshTokenValidator)
     {
         _context = context;
         _jwtService = jwtService;
         _passwordHasher = passwordHasher;
+        _loginValidator = loginValidator;
+        _refreshTokenValidator = refreshTokenValidator;
     }
 
+    // LoginAsync
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
+        var validationResult = await _loginValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+            throw new FluentValidation.ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
         var user = await _context.Users
             .Include(u => u.RefreshTokens)
             .FirstOrDefaultAsync(u => u.Username == request.Username);
@@ -65,8 +83,13 @@ public class AuthorizationService : AuthService.Services.Interfaces.IAuthorizati
         };
     }
 
+    // RefreshAsync
     public async Task<LoginResponse> RefreshAsync(RefreshTokenRequest request)
     {
+        var validationResult = await _refreshTokenValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+            throw new FluentValidation.ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
         var user = await _context.Users
             .Include(u => u.RefreshTokens)
             .FirstOrDefaultAsync(u => u.RefreshTokens.Any(rt => rt.Token == request.RefreshToken));

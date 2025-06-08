@@ -6,6 +6,7 @@ using AuthService.Models;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using AuthService.Services.Interfaces;
+using FluentValidation;
 
 namespace AuthService.Services.Implementations
 {
@@ -13,15 +14,27 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateMenuRequest> _createValidator;
+        private readonly IValidator<UpdateMenuRequest> _updateValidator;
 
-        public MenuService(AuthDbContext context, IMapper mapper)
+        public MenuService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreateMenuRequest> createValidator,
+            IValidator<UpdateMenuRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<MenuResponse> CreateAsync(CreateMenuRequest request)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var menu = _mapper.Map<Menu>(request);
             _context.Menus.Add(menu);
             await _context.SaveChangesAsync();
@@ -30,6 +43,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<MenuResponse> UpdateAsync(int id, UpdateMenuRequest request)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var menu = await _context.Menus.FindAsync(id)
                 ?? throw new KeyNotFoundException("Menu not found");
 

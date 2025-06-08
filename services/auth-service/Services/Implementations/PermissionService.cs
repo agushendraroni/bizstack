@@ -5,6 +5,7 @@ using AuthService.Models;
 using AuthService.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace AuthService.Services.Implementations
 {
@@ -12,15 +13,27 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreatePermissionRequest> _createValidator;
+        private readonly IValidator<UpdatePermissionRequest> _updateValidator;
 
-        public PermissionService(AuthDbContext context, IMapper mapper)
+        public PermissionService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreatePermissionRequest> createValidator,
+            IValidator<UpdatePermissionRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<PermissionResponse> CreateAsync(CreatePermissionRequest request, string createdBy)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = _mapper.Map<Permission>(request);
             entity.CreatedAt = DateTime.UtcNow;
             entity.CreatedBy = createdBy;
@@ -31,6 +44,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<PermissionResponse> UpdateAsync(int id, UpdatePermissionRequest request, string changedBy)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = await _context.Permissions.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
             if (entity == null) throw new KeyNotFoundException("Permission not found");
 

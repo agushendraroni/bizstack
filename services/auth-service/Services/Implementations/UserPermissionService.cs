@@ -3,6 +3,7 @@ using AuthService.DTOs.UserPermission;
 using AuthService.Models;
 using AuthService.Services.Interfaces;
 using AutoMapper;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary.DTOs;
 
@@ -12,15 +13,27 @@ namespace AuthService.Services.Implementations
     {
         private readonly AuthDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateUserPermissionRequest> _createValidator;
+        private readonly IValidator<UpdateUserPermissionRequest> _updateValidator;
 
-        public UserPermissionService(AuthDbContext context, IMapper mapper)
+        public UserPermissionService(
+            AuthDbContext context,
+            IMapper mapper,
+            IValidator<CreateUserPermissionRequest> createValidator,
+            IValidator<UpdateUserPermissionRequest> updateValidator)
         {
             _context = context;
             _mapper = mapper;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task<UserPermissionResponse> CreateAsync(CreateUserPermissionRequest request)
         {
+            var validationResult = await _createValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = _mapper.Map<UserPermission>(request);
             _context.UserPermissions.Add(entity);
             await _context.SaveChangesAsync();
@@ -29,6 +42,10 @@ namespace AuthService.Services.Implementations
 
         public async Task<UserPermissionResponse> UpdateAsync(UpdateUserPermissionRequest request)
         {
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+                throw new ValidationException(string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)));
+
             var entity = await _context.UserPermissions
                 .FirstOrDefaultAsync(x => x.UserId == request.UserId && x.PermissionId == request.PermissionId);
             if (entity == null) throw new KeyNotFoundException("UserPermission not found");
