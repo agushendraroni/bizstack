@@ -1,99 +1,97 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AuthService.Data;
-using AuthService.Models;
+using AuthService.DTOs.Common;
 using AuthService.DTOs.Role;
-using AuthService.Services.Interfaces;
+using AuthService.Interfaces;
+using AuthService.Models;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
-namespace AuthService.Services.Implementations;
-
-public class RoleService : IRoleService
+namespace AuthService.Services.Implementations
 {
-    private readonly AuthDbContext _context;
-
-    public RoleService(AuthDbContext context)
+    public class RoleService : IRoleService
     {
-        _context = context;
-    }
+        private readonly AuthDbContext _context;
+        private readonly IMapper _mapper;
 
-    public async Task<RoleResponse> CreateAsync(CreateRoleRequest request, string currentUser)
-    {
-        var role = new Role
+        public RoleService(AuthDbContext context, IMapper mapper)
         {
-            Name = request.Name,
-            CompanyId = request.CompanyId,
-            IsActive = request.IsActive,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = currentUser
-        };
-        _context.Roles.Add(role);
-        await _context.SaveChangesAsync();
-        return MapToResponse(role);
-    }
+            _context = context;
+            _mapper = mapper;
+        }
 
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var role = await _context.Roles.FindAsync(id);
-        if (role == null) return false;
-        _context.Roles.Remove(role);
-        await _context.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<IEnumerable<RoleResponse>> GetAllAsync(RoleFilterRequest filter)
-    {
-        var query = _context.Roles.AsQueryable();
-
-        if (filter.CompanyId.HasValue)
-            query = query.Where(r => r.CompanyId == filter.CompanyId.Value);
-
-        if (filter.IsActive.HasValue)
-            query = query.Where(r => r.IsActive == filter.IsActive.Value);
-
-        if (!string.IsNullOrEmpty(filter.NameContains))
-            query = query.Where(r => r.Name.Contains(filter.NameContains));
-
-        int skip = ((filter.Page ?? 1) - 1) * (filter.PageSize ?? 10);
-        query = query.Skip(skip).Take(filter.PageSize ?? 10);
-
-        var roles = await query.ToListAsync();
-        return roles.Select(MapToResponse);
-    }
-
-    public async Task<RoleResponse?> GetByIdAsync(int id)
-    {
-        var role = await _context.Roles.FindAsync(id);
-        if (role == null) return null;
-        return MapToResponse(role);
-    }
-
-    public async Task<RoleResponse?> UpdateAsync(int id, UpdateRoleRequest request, string currentUser)
-    {
-        var role = await _context.Roles.FindAsync(id);
-        if (role == null) return null;
-        role.Name = request.Name;
-        role.IsActive = request.IsActive;
-        role.ChangedAt = DateTime.UtcNow;
-        role.ChangedBy = currentUser;
-        await _context.SaveChangesAsync();
-        return MapToResponse(role);
-    }
-
-    private RoleResponse MapToResponse(Role role)
-    {
-        return new RoleResponse
+        public async Task<RoleResponse?> GetByIdAsync(int id)
         {
-            Id = role.Id,
-            Name = role.Name,
-            CompanyId = role.CompanyId,
-            IsActive = role.IsActive,
-            CreatedAt = role.CreatedAt,
-            CreatedBy = role.CreatedBy,
-            ChangedAt = role.ChangedAt,
-            ChangedBy = role.ChangedBy
-        };
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
+            return role == null ? null : _mapper.Map<RoleResponse>(role);
+        }
+
+        public async Task<PaginatedResponse<RoleResponse>> GetAllAsync(RoleFilterRequest filter)
+        {
+            var query = _context.Roles
+                .Where(r => !r.IsDeleted);
+
+            if (!string.IsNullOrEmpty(filter.Name))
+                query = query.Where(r => r.Name.Contains(filter.Name));
+
+            if (filter.CompanyId.HasValue)
+                query = query.Where(r => r.CompanyId == filter.CompanyId.Value);
+
+            if (!string.IsNullOrEmpty(filter.SortBy))
+            {
+                query = filter.SortOrder?.ToLower() == "desc"
+                    ? query.OrderByDescending(e => EF.Property<object>(e, filter.SortBy))
+                    : query.OrderBy(e => EF.Property<object>(e, filter.SortBy));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var roles = await query
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            var data = _mapper.Map<List<RoleResponse>>(roles);
+            return new PaginatedResponse<RoleResponse>(data, totalCount, filter.Page, filter.PageSize);
+        }
+
+        public async Task<RoleResponse> CreateAsync(CreateRoleRequest request, string createdBy)
+        {
+            var role = _mapper.Map<Role>(request);
+            role.CreatedAt = DateTime.UtcNow;
+            role.CreatedBy = createdBy;
+
+            _context.Roles.Add(role);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<RoleResponse>(role);
+        }
+
+        public async Task<RoleResponse?> UpdateAsync(int id, UpdateRoleRequest request, string updatedBy)
+        {
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
+            if (role == null) return null;
+
+            role.Name = request.Name;
+            role.CompanyId = request.CompanyId;
+            role.ChangedAt = DateTime.UtcNow;
+            role.ChangedBy = updatedBy;
+
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<RoleResponse>(role);
+        }
+
+        public async Task<bool> DeleteAsync(int id, string deletedBy)
+        {
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted);
+            if (role == null) return false;
+
+            role.IsDeleted = true;
+            role.ChangedAt = DateTime.UtcNow;
+            role.ChangedBy = deletedBy;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

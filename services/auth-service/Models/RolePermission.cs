@@ -2,7 +2,7 @@ using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    public class RolePermission:BaseEntity
+    public class RolePermission : BaseEntity
     {
         public int RoleId { get; set; }
         public Role? Role { get; set; }

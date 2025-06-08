@@ -2,7 +2,7 @@ using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    public class UserPermission:BaseEntity
+    public class UserPermission : BaseEntity
     {
         public int UserId { get; set; }
         public User? User { get; set; }

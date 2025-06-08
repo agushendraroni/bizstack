@@ -1,123 +1,86 @@
-// Services/Implementations/UserService.cs
 using AuthService.Data;
 using AuthService.DTOs.User;
+using AuthService.DTOs.Common;
+using AuthService.Interfaces;
 using AuthService.Models;
-using AuthService.Services.Interfaces;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Services.Implementations
 {
-    /// <summary>
-    /// Implementasi service user.
-    /// </summary>
     public class UserService : IUserService
     {
         private readonly AuthDbContext _context;
+        private readonly IMapper _mapper;
 
-        public UserService(AuthDbContext context)
+        public UserService(AuthDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public async Task<UserResponse> CreateAsync(CreateUserRequest request, string createdBy = "system")
+        public async Task<UserResponse> CreateAsync(CreateUserRequest request)
         {
-            var entity = new User
-            {
-                Username = request.Username,
-                CompanyId = request.CompanyId,
-                PasswordHash = request.PasswordHash,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = createdBy,
-                IsDeleted = false
-            };
-
-            _context.Users.Add(entity);
+            var user = _mapper.Map<User>(request);
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
-            return MapToResponse(entity);
+            return _mapper.Map<UserResponse>(user);
         }
 
-        public async Task<bool> DeleteAsync(int id, string deletedBy = "system")
+        public async Task<UserResponse> UpdateAsync(int id, UpdateUserRequest request)
         {
-            var entity = await _context.Users.FindAsync(id);
-            if (entity == null || entity.IsDeleted) return false;
+            var user = await _context.Users.FindAsync(id)
+                ?? throw new KeyNotFoundException("User not found");
 
-            entity.IsDeleted = true;
-            entity.ChangedAt = DateTime.UtcNow;
-            entity.ChangedBy = deletedBy;
+            _mapper.Map(request, user);
+            if (!string.IsNullOrWhiteSpace(request.Password))
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
+            user.ChangedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return _mapper.Map<UserResponse>(user);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id)
+                ?? throw new KeyNotFoundException("User not found");
+
+            user.IsDeleted = true;
+            user.ChangedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<IEnumerable<UserResponse>> GetAllAsync(UserFilterRequest filter)
+        public async Task<UserResponse> GetByIdAsync(int id)
         {
-            var query = _context.Users
-                .Include(u => u.Company)
-                .Where(u => !u.IsDeleted)
-                .AsQueryable();
+            var user = await _context.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted)
+                ?? throw new KeyNotFoundException("User not found");
+
+            return _mapper.Map<UserResponse>(user);
+        }
+
+        public async Task<PaginatedResponse<UserResponse>> GetAllAsync(UserFilterRequest filter)
+        {
+            var query = _context.Users.AsQueryable().Where(u => !u.IsDeleted);
 
             if (!string.IsNullOrEmpty(filter.Username))
                 query = query.Where(u => u.Username.Contains(filter.Username));
 
             if (filter.CompanyId.HasValue)
-                query = query.Where(u => u.CompanyId == filter.CompanyId.Value);
+                query = query.Where(u => u.CompanyId == filter.CompanyId);
 
-            // Sorting
-            if (!string.IsNullOrEmpty(filter.SortBy))
-            {
-                query = filter.SortOrder?.ToLower() == "desc"
-                    ? query.OrderByDescending(e => EF.Property<object>(e, filter.SortBy))
-                    : query.OrderBy(e => EF.Property<object>(e, filter.SortBy));
-            }
-            else
-            {
-                query = query.OrderBy(u => u.Id);
-            }
+            var totalCount = await query.CountAsync();
+            var data = await query
+                .OrderBy(u => u.Username)
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
 
-            // Pagination
-            query = query.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize);
-
-            var list = await query.ToListAsync();
-            return list.Select(MapToResponse);
+            var result = _mapper.Map<List<UserResponse>>(data);
+            return new PaginatedResponse<UserResponse>(result, totalCount, filter.Page, filter.PageSize);
         }
-
-        public async Task<UserResponse?> GetByIdAsync(int id)
-        {
-            var entity = await _context.Users
-                .Include(u => u.Company)
-                .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
-            return entity == null ? null : MapToResponse(entity);
-        }
-
-        public async Task<UserResponse?> UpdateAsync(int id, UpdateUserRequest request, string updatedBy = "system")
-        {
-            var entity = await _context.Users.FindAsync(id);
-            if (entity == null || entity.IsDeleted) return null;
-
-            entity.Username = request.Username;
-            entity.CompanyId = request.CompanyId;
-            entity.ChangedAt = DateTime.UtcNow;
-            entity.ChangedBy = updatedBy;
-
-            await _context.SaveChangesAsync();
-
-            return MapToResponse(entity);
-        }
-
-        private static UserResponse MapToResponse(User entity) => new()
-        {
-            Id = entity.Id,
-            Username = entity.Username,
-            CompanyId = entity.CompanyId,
-            CompanyName = entity.Company?.Name ?? string.Empty,
-            LoginFailCount = entity.LoginFailCount,
-            LastLoginAt = entity.LastLoginAt,
-            LastFailedLoginAt = entity.LastFailedLoginAt,
-            CreatedAt = entity.CreatedAt,
-            ChangedAt = entity.ChangedAt,
-            CreatedBy = entity.CreatedBy,
-            ChangedBy = entity.ChangedBy,
-        };
     }
 }

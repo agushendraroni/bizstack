@@ -1,7 +1,9 @@
 using AuthService.Data;
+using AuthService.DTOs.Common;
 using AuthService.DTOs.UserPermission;
 using AuthService.Models;
 using AuthService.Services.Interfaces;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Services.Implementations
@@ -9,72 +11,75 @@ namespace AuthService.Services.Implementations
     public class UserPermissionService : IUserPermissionService
     {
         private readonly AuthDbContext _context;
+        private readonly IMapper _mapper;
 
-        public UserPermissionService(AuthDbContext context)
+        public UserPermissionService(AuthDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<UserPermissionResponse> CreateAsync(CreateUserPermissionRequest request)
         {
-            var entity = new UserPermission
-            {
-                UserId = request.UserId,
-                PermissionId = request.PermissionId
-            };
-
+            var entity = _mapper.Map<UserPermission>(request);
             _context.UserPermissions.Add(entity);
             await _context.SaveChangesAsync();
-
-            return MapToResponse(entity);
+            return _mapper.Map<UserPermissionResponse>(entity);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<UserPermissionResponse> UpdateAsync(UpdateUserPermissionRequest request)
         {
-            var entity = await _context.UserPermissions.FindAsync(id);
-            if (entity == null) return false;
+            var entity = await _context.UserPermissions
+                .FirstOrDefaultAsync(x => x.UserId == request.UserId && x.PermissionId == request.PermissionId);
+            if (entity == null) throw new KeyNotFoundException("UserPermission not found");
 
+            _mapper.Map(request, entity);
+            await _context.SaveChangesAsync();
+            return _mapper.Map<UserPermissionResponse>(entity);
+        }
+
+        public async Task<bool> DeleteAsync(int userId, int permissionId)
+        {
+            var entity = await _context.UserPermissions
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.PermissionId == permissionId);
+            if (entity == null) return false;
             _context.UserPermissions.Remove(entity);
             await _context.SaveChangesAsync();
-
             return true;
         }
 
-        public async Task<IEnumerable<UserPermissionResponse>> GetAllAsync(UserPermissionFilterRequest filter)
+        public async Task<UserPermissionResponse?> GetByIdAsync(int userId, int permissionId)
+        {
+            var entity = await _context.UserPermissions
+                .FirstOrDefaultAsync(x => x.UserId == userId && x.PermissionId == permissionId);
+            return entity != null ? _mapper.Map<UserPermissionResponse>(entity) : null;
+        }
+
+        public async Task<PaginatedResponse<UserPermissionResponse>> GetAllAsync(UserPermissionFilterRequest filter)
         {
             var query = _context.UserPermissions.AsQueryable();
 
             if (filter.UserId.HasValue)
                 query = query.Where(x => x.UserId == filter.UserId);
-
             if (filter.PermissionId.HasValue)
                 query = query.Where(x => x.PermissionId == filter.PermissionId);
 
-            var result = await query.ToListAsync();
-            return result.Select(MapToResponse);
+            var total = await query.CountAsync();
+
+
+
+             var items = await query
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            var mapped = _mapper.Map<List<UserPermissionResponse>>(items);
+            return new PaginatedResponse<UserPermissionResponse>(mapped, total, filter.Page, filter.PageSize);
         }
 
-        public async Task<UserPermissionResponse?> GetByIdAsync(int id)
+        Task<PaginatedResponse<UserPermissionResponse>> IUserPermissionService.GetAllAsync(UserPermissionFilterRequest filter)
         {
-            var entity = await _context.UserPermissions.FindAsync(id);
-            return entity == null ? null : MapToResponse(entity);
+            throw new NotImplementedException();
         }
-
-        public async Task<UserPermissionResponse?> UpdateAsync(int id, UpdateUserPermissionRequest request)
-        {
-            var entity = await _context.UserPermissions.FindAsync(id);
-            if (entity == null) return null;
-
-            entity.PermissionId = request.PermissionId;
-            await _context.SaveChangesAsync();
-
-            return MapToResponse(entity);
-        }
-
-        private UserPermissionResponse MapToResponse(UserPermission entity) => new()
-        {
-            UserId = entity.UserId,
-            PermissionId = entity.PermissionId
-        };
     }
 }

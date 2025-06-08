@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    public class Role:BaseEntity
+    public class Role : BaseEntity
     {
         [Key]
         public int Id { get; set; }

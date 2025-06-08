@@ -1,3 +1,5 @@
+
+using AuthService.DTOs.Common;
 using AuthService.DTOs.UserPasswordHistory;
 using AuthService.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -17,39 +19,39 @@ namespace AuthService.Controllers
             _service = service;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] UserPasswordHistoryFilterRequest filter)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateUserPasswordHistoryRequest request)
         {
-            var result = await _service.GetAllAsync(filter);
-            return Ok(result);
+            var result = await _service.CreateAsync(request);
+            return Ok(ApiResponse<UserPasswordHistoryResponse>.SuccessResponse(result));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserPasswordHistoryRequest request)
+        {
+            var result = await _service.UpdateAsync(id, request);
+            return Ok(ApiResponse<UserPasswordHistoryResponse>.SuccessResponse(result));
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _service.DeleteAsync(id);
+            return Ok(ApiResponse<string>.SuccessResponse(result ? "Deleted" : "Not Found"));
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
-            return result == null ? NotFound() : Ok(result);
+            return result == null ? NotFound() : Ok(ApiResponse<UserPasswordHistoryResponse>.SuccessResponse(result));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateUserPasswordHistoryRequest request)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var result = await _service.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, UpdateUserPasswordHistoryRequest request)
-        {
-            var result = await _service.UpdateAsync(id, request);
-            return result == null ? NotFound() : Ok(result);
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var success = await _service.DeleteAsync(id);
-            return success ? NoContent() : NotFound();
+            var result = await _service.GetAllAsync();
+            return Ok(ApiResponse<IEnumerable<UserPasswordHistoryResponse>>.SuccessResponse(result));
         }
     }
 }

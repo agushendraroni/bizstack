@@ -1,13 +1,14 @@
 using AuthService.DTOs.User;
+using AuthService.DTOs.Common;
 
-namespace AuthService.Services.Interfaces
+namespace AuthService.Interfaces
 {
     public interface IUserService
     {
-        Task<IEnumerable<UserResponse>> GetAllAsync(UserFilterRequest filter);
-        Task<UserResponse?> GetByIdAsync(int id);
-        Task<UserResponse> CreateAsync(CreateUserRequest request, string createdBy = "system");
-        Task<UserResponse?> UpdateAsync(int id, UpdateUserRequest request, string updatedBy = "system");
-        Task<bool> DeleteAsync(int id, string deletedBy = "system");
+        Task<UserResponse> CreateAsync(CreateUserRequest request);
+        Task<UserResponse> UpdateAsync(int id, UpdateUserRequest request);
+        Task<bool> DeleteAsync(int id);
+        Task<UserResponse> GetByIdAsync(int id);
+        Task<PaginatedResponse<UserResponse>> GetAllAsync(UserFilterRequest filter);
     }
 }

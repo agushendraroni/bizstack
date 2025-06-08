@@ -1,14 +1,13 @@
+// ==========================
+// Service Interface (IUserRoleService.cs)
+using AuthService.DTOs.Common;
 using AuthService.DTOs.UserRole;
-
-namespace AuthService.Services.Interfaces
+namespace AuthService.Services.Interfaces;
+public interface IUserRoleService
 {
-    public interface IUserRoleService
-    {
-        Task<IEnumerable<UserRoleResponse>> GetAllAsync(UserRoleFilterRequest filter);
-        Task<UserRoleResponse?> GetByIdAsync(int id);
-        Task<UserRoleResponse> CreateAsync(CreateUserRoleRequest request);
-        Task<UserRoleResponse?> UpdateAsync(int id, UpdateUserRoleRequest request);
-        Task<bool> DeleteAsync(int id);
-        Task<UserRoleResponse> GetByCompositeKeyAsync(int userId, int roleId);
-    }
+    Task<UserRoleResponse> CreateAsync(CreateUserRoleRequest request);
+    Task<UserRoleResponse> UpdateAsync(int userId, int roleId, UpdateUserRoleRequest request);
+    Task<bool> DeleteAsync(int userId, int roleId);
+    Task<UserRoleResponse> GetByIdAsync(int userId, int roleId);
+    Task<PaginatedResponse<UserRoleResponse>> GetAllAsync(UserRoleFilterRequest filter);
 }

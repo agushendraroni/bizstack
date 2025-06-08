@@ -1,4 +1,6 @@
 // DTOs/Common/ApiResponse.cs
+using AuthService.DTOs.UserPermission;
+
 namespace AuthService.DTOs.Common
 {
     public class ApiResponse<T>
@@ -31,3 +33,5 @@ namespace AuthService.DTOs.Common
         }
     }
 }
+
+        

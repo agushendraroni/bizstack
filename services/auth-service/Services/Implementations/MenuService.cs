@@ -1,93 +1,83 @@
 using AuthService.Data;
 using AuthService.DTOs.Menu;
+using AuthService.DTOs.Common;
+using AuthService.Interfaces;
 using AuthService.Models;
-using AuthService.Services.Interfaces;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using AuthService.Services.Interfaces;
 
 namespace AuthService.Services.Implementations
 {
     public class MenuService : IMenuService
     {
         private readonly AuthDbContext _context;
+        private readonly IMapper _mapper;
 
-        public MenuService(AuthDbContext context)
+        public MenuService(AuthDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<MenuResponse> CreateAsync(CreateMenuRequest request)
         {
-            var menu = new Menu
-            {
-                Name = request.Name,
-                Url = request.Url,
-                Icon = request.Icon,
-                IsActive = request.IsActive,
-                ParentId = request.ParentId,
-                CompanyId = request.CompanyId
-            };
-
+            var menu = _mapper.Map<Menu>(request);
             _context.Menus.Add(menu);
             await _context.SaveChangesAsync();
+            return _mapper.Map<MenuResponse>(menu);
+        }
 
-            return MapToResponse(menu);
+        public async Task<MenuResponse> UpdateAsync(int id, UpdateMenuRequest request)
+        {
+            var menu = await _context.Menus.FindAsync(id)
+                ?? throw new KeyNotFoundException("Menu not found");
+
+            _mapper.Map(request, menu);
+            menu.ChangedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return _mapper.Map<MenuResponse>(menu);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var menu = await _context.Menus.FindAsync(id);
-            if (menu == null) return false;
+            var menu = await _context.Menus.FindAsync(id)
+                ?? throw new KeyNotFoundException("Menu not found");
 
-            _context.Menus.Remove(menu);
+            menu.IsDeleted = true;
+            menu.ChangedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-
             return true;
         }
 
-        public async Task<IEnumerable<MenuResponse>> GetAllAsync(MenuFilterRequest filter)
+        public async Task<MenuResponse> GetByIdAsync(int id)
         {
-            var query = _context.Menus.AsQueryable();
+            var menu = await _context.Menus.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted)
+                ?? throw new KeyNotFoundException("Menu not found");
+
+            return _mapper.Map<MenuResponse>(menu);
+        }
+
+        public async Task<PaginatedResponse<MenuResponse>> GetAllAsync(MenuFilterRequest filter)
+        {
+            var query = _context.Menus.AsQueryable().Where(m => !m.IsDeleted);
+
+            if (!string.IsNullOrEmpty(filter.Name))
+                query = query.Where(m => m.Name.Contains(filter.Name));
 
             if (filter.CompanyId.HasValue)
                 query = query.Where(m => m.CompanyId == filter.CompanyId);
 
-            if (filter.IsActive.HasValue)
-                query = query.Where(m => m.IsActive == filter.IsActive);
+            var totalCount = await query.CountAsync();
+            var data = await query
+                .OrderBy(m => m.OrderIndex)
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
 
-            var menus = await query.ToListAsync();
-            return menus.Select(MapToResponse);
+            var result = _mapper.Map<List<MenuResponse>>(data);
+            return new PaginatedResponse<MenuResponse>(result, totalCount, filter.Page, filter.PageSize);
         }
-
-        public async Task<MenuResponse?> GetByIdAsync(int id)
-        {
-            var menu = await _context.Menus.FindAsync(id);
-            return menu == null ? null : MapToResponse(menu);
-        }
-
-        public async Task<MenuResponse?> UpdateAsync(int id, UpdateMenuRequest request)
-        {
-            var menu = await _context.Menus.FindAsync(id);
-            if (menu == null) return null;
-
-            menu.Name = request.Name;
-            menu.Url = request.Url;
-            menu.Icon = request.Icon;
-            menu.IsActive = request.IsActive;
-            menu.ParentId = request.ParentId;
-
-            await _context.SaveChangesAsync();
-            return MapToResponse(menu);
-        }
-
-        private MenuResponse MapToResponse(Menu menu) => new()
-        {
-            Id = menu.Id,
-            Name = menu.Name,
-            Url = menu.Url ?? string.Empty,
-            Icon = menu.Icon ?? string.Empty,
-            IsActive = menu.IsActive,
-            ParentId = menu.ParentId,
-            CompanyId = menu.CompanyId
-        };
     }
 }

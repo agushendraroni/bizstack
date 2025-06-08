@@ -1,91 +1,106 @@
-using AuthService.Data;
-using AuthService.DTOs.UserRole;
-using AuthService.Models;
-using AuthService.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using AuthService.Data;
+using AuthService.Models;
+using AuthService.DTOs.UserRole;
+using AuthService.Services.Interfaces;
+using AuthService.DTOs.Common;
 
 namespace AuthService.Services.Implementations
 {
     public class UserRoleService : IUserRoleService
     {
         private readonly AuthDbContext _context;
+        private readonly IMapper _mapper;
 
-        public UserRoleService(AuthDbContext context)
+        public UserRoleService(AuthDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<UserRoleResponse> CreateAsync(CreateUserRoleRequest request)
         {
-            var userRole = new UserRole
-            {
-                UserId = request.UserId,
-                RoleId = request.RoleId
-            };
+            var exists = await _context.UserRoles.AnyAsync(ur => ur.UserId == request.UserId && ur.RoleId == request.RoleId && !ur.IsDeleted);
+            if (exists)
+                throw new InvalidOperationException("UserRole already exists.");
 
-            _context.UserRoles.Add(userRole);
+            var entity = _mapper.Map<UserRole>(request);
+            _context.UserRoles.Add(entity);
             await _context.SaveChangesAsync();
 
-            return MapToResponse(userRole);
+            return _mapper.Map<UserRoleResponse>(entity);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<UserRoleResponse> UpdateAsync(int userId, int roleId, UpdateUserRoleRequest request)
         {
-            var userRole = await _context.UserRoles.FindAsync(id);
-            if (userRole == null) return false;
+            var entity = await _context.UserRoles
+                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId && !ur.IsDeleted);
 
-            _context.UserRoles.Remove(userRole);
+            if (entity is null)
+                throw new KeyNotFoundException("UserRole not found.");
+
+            // Update properties, if user wants to change UserId or RoleId, 
+            // better handle carefully, here kita anggap gak boleh update composite key
+            // Jadi hanya boleh update non-key fields, tapi di model ini gak ada
+
+            // Misal kita cuma update IsActive, etc, tapi karena gak ada, skip
+
+            entity.ChangedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<UserRoleResponse>(entity);
+        }
+
+        public async Task<bool> DeleteAsync(int userId, int roleId)
+        {
+            var entity = await _context.UserRoles
+                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId && !ur.IsDeleted);
+
+            if (entity is null)
+                throw new KeyNotFoundException("UserRole not found.");
+
+            entity.IsDeleted = true;
+            entity.ChangedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
             return true;
         }
 
-        public async Task<IEnumerable<UserRoleResponse>> GetAllAsync(UserRoleFilterRequest filter)
+        public async Task<UserRoleResponse> GetByIdAsync(int userId, int roleId)
         {
-            var query = _context.UserRoles.AsQueryable();
+            var entity = await _context.UserRoles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId && !ur.IsDeleted);
+
+            if (entity is null)
+                throw new KeyNotFoundException("UserRole not found.");
+
+            return _mapper.Map<UserRoleResponse>(entity);
+        }
+
+        public async Task<PaginatedResponse<UserRoleResponse>> GetAllAsync(UserRoleFilterRequest filter)
+        {
+            var query = _context.UserRoles.AsQueryable().Where(x => !x.IsDeleted);
 
             if (filter.UserId.HasValue)
-                query = query.Where(x => x.UserId == filter.UserId);
+                query = query.Where(x => x.UserId == filter.UserId.Value);
 
             if (filter.RoleId.HasValue)
-                query = query.Where(x => x.RoleId == filter.RoleId);
+                query = query.Where(x => x.RoleId == filter.RoleId.Value);
 
-            var result = await query.ToListAsync();
-            return result.Select(MapToResponse);
+            var totalCount = await query.CountAsync();
+
+            var data = await query
+                .OrderBy(x => x.UserId).ThenBy(x => x.RoleId)
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            var result = _mapper.Map<List<UserRoleResponse>>(data);
+            return new PaginatedResponse<UserRoleResponse>(result, totalCount, filter.Page, filter.PageSize);
         }
-
-        public async Task<UserRoleResponse> GetByCompositeKeyAsync(int userId, int roleId)
-        {
-            var userRole = await _context.UserRoles
-                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
-
-            if (userRole == null)
-                throw new InvalidOperationException("UserRole not found.");
-
-            return MapToResponse(userRole);
-        }
-
-        public async Task<UserRoleResponse?> GetByIdAsync(int id)
-        {
-            var userRole = await _context.UserRoles.FindAsync(id);
-            return userRole == null ? null : MapToResponse(userRole);
-        }
-
-        public async Task<UserRoleResponse?> UpdateAsync(int id, UpdateUserRoleRequest request)
-        {
-            var userRole = await _context.UserRoles.FindAsync(id);
-            if (userRole == null) return null;
-
-            userRole.RoleId = request.RoleId;
-            await _context.SaveChangesAsync();
-
-            return MapToResponse(userRole);
-        }
-
-        private UserRoleResponse MapToResponse(UserRole entity) => new()
-        {
-            UserId = entity.UserId,
-            RoleId = entity.RoleId
-        };
     }
 }

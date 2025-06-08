@@ -1,10 +1,10 @@
-namespace AuthService.DTOs.Role;
+using AuthService.DTOs.Common;
 
-public class RoleFilterRequest
+namespace AuthService.DTOs.Role
 {
-    public int? CompanyId { get; set; }
-    public bool? IsActive { get; set; }
-    public string? NameContains { get; set; }
-    public int? Page { get; set; } = 1;
-    public int? PageSize { get; set; } = 10;
+    public class RoleFilterRequest : PaginationFilter
+    {
+        public string? Name { get; set; }
+        public int? CompanyId { get; set; }
+    }
 }

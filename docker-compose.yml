@@ -1,4 +1,4 @@
-version: "3.8"
+
 
 services:
   n8n:
@@ -31,7 +31,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: Host=172.17.0.1;Port=5432;Database=auth_db;Username=auth_user;Password=auth_pass
     ports:
-      - "5282:80"
+      - "5282:5282"
     depends_on:
       - n8n
 
@@ -45,23 +45,19 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=172.17.0.1;Port=5432;Database=user_db;Username=user_user;Password=user_pass
     ports:
-      - "5283:80"
+      - "5283:5283"
     depends_on:
       - n8n
 
-  graphql-gateway:
+  graphql-mesh:
     build:
-      context: ./services/graphql-gateway
+      context: ./services/graphql-mesh
       dockerfile: Dockerfile
-    container_name: frameworkx-graphql-gateway
+    container_name: frameworkx-graphql-mesh
     restart: always
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      # Tambahkan connection string atau variable environment lain jika diperlukan
     ports:
-      - "5000:5000"
+      - "4000:4000"
     depends_on:
-      - n8n
       - auth-service
       - user-service
 
@@ -77,7 +73,7 @@ services:
       - n8n
       - auth-service
       - user-service
-      - graphql-gateway
+      - graphql-mesh
 
 volumes:
   n8n_data:

@@ -5,9 +5,6 @@ using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    /// <summary>
-    /// Entity User (tabel Users).
-    /// </summary>
     public class User : BaseEntity
     {
         [Key]
@@ -20,14 +17,12 @@ namespace AuthService.Models
         public int CompanyId { get; set; }
         public Company Company { get; set; } = default!;
 
-        [Required]
-        [MaxLength(128)]
+        [Required, MaxLength(128)]
         public string PasswordHash { get; set; } = default!;
 
         public int LoginFailCount { get; set; } = 0;
         public DateTime? LastLoginAt { get; set; }
         public DateTime? LastFailedLoginAt { get; set; }
-        public bool IsDeleted { get; set; } = false;
 
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<UserPermission> UserPermissions { get; set; } = new List<UserPermission>();

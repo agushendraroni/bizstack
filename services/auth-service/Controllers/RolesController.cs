@@ -1,59 +1,66 @@
+using AuthService.DTOs.Common;
 using AuthService.DTOs.Role;
-using AuthService.Services.Interfaces;
+using AuthService.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
-namespace AuthService.Controllers;
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class RolesController : ControllerBase
+namespace AuthService.Controllers
 {
-    private readonly IRoleService _roleService;
-    public RolesController(IRoleService roleService)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class RolesController : ControllerBase
     {
-        _roleService = roleService;
-    }
+        private readonly IRoleService _roleService;
 
-    private string CurrentUser => User.FindFirstValue(ClaimTypes.Name) ?? "system";
+        public RolesController(IRoleService roleService)
+        {
+            _roleService = roleService;
+        }
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateRoleRequest request)
-    {
-        var result = await _roleService.CreateAsync(request, CurrentUser);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-    }
+        private string GetUser() =>
+            User.FindFirstValue(ClaimTypes.Name) ?? "system";
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
-    {
-        var result = await _roleService.GetByIdAsync(id);
-        if (result == null) return NotFound();
-        return Ok(result);
-    }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var role = await _roleService.GetByIdAsync(id);
+            return role == null
+                ? NotFound(ApiResponse<string>.Fail("Role not found"))
+                : Ok(ApiResponse<RoleResponse>.SuccessResponse(role));
+        }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] RoleFilterRequest filter)
-    {
-        var result = await _roleService.GetAllAsync(filter);
-        return Ok(result);
-    }
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] RoleFilterRequest filter)
+        {
+            var result = await _roleService.GetAllAsync(filter);
+            return Ok(ApiResponse<IEnumerable<RoleResponse>>.SuccessResponse(result.Data, meta: new { result.TotalCount, result.Page, result.PageSize }));
+        }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateRoleRequest request)
-    {
-        var result = await _roleService.UpdateAsync(id, request, CurrentUser);
-        if (result == null) return NotFound();
-        return Ok(result);
-    }
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateRoleRequest request)
+        {
+            var result = await _roleService.CreateAsync(request, GetUser());
+            return Ok(ApiResponse<RoleResponse>.SuccessResponse(result));
+        }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var success = await _roleService.DeleteAsync(id);
-        if (!success) return NotFound();
-        return NoContent();
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateRoleRequest request)
+        {
+            var result = await _roleService.UpdateAsync(id, request, GetUser());
+            return result == null
+                ? NotFound(ApiResponse<string>.Fail("Role not found"))
+                : Ok(ApiResponse<RoleResponse>.SuccessResponse(result));
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _roleService.DeleteAsync(id, GetUser());
+            return success
+                ? Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"))
+                : NotFound(ApiResponse<string>.Fail("Role not found"));
+        }
     }
 }

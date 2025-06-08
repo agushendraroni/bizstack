@@ -4,7 +4,7 @@ using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    public class UserPasswordHistory:BaseEntity
+        public class UserPasswordHistory : BaseEntity
     {
         [Key]
         public int Id { get; set; }
@@ -14,6 +14,5 @@ namespace AuthService.Models
 
         [Required]
         public required string PasswordHash { get; set; }
-
     }
 }

@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/.vscode/
+**/.git/
+**/.idea/
+*.md
+*.log
+*.suo
+*.user
+*.csproj.user
+*.sln.docstates
+Dockerfile.*
+docker-compose.*
+.gitignore
+.env

@@ -4,26 +4,44 @@ namespace AuthService.DTOs.Common;
 
 public class PaginationFilter
 {
-    public int PageNumber { get; set; } = 1;
-    public int PageSize { get; set; } = 10;
+    private int _page = 1;
+    private int _pageSize = 10;
 
-    public PaginationFilter()
+    public int Page
     {
+        get => _page;
+        set => _page = (value <= 0) ? 1 : value;
     }
 
-    public PaginationFilter(int pageNumber, int pageSize)
+    public int PageSize
     {
-        PageNumber = pageNumber;
-        PageSize = pageSize;
+        get => _pageSize;
+        set => _pageSize = (value <= 0) ? 10 : value;
     }
-
-    public bool IsValid() => PageNumber > 0 && PageSize > 0;
-
 
     [StringLength(50, ErrorMessage = "SortBy maksimal 50 karakter.")]
     public string? SortBy { get; set; }
 
     [RegularExpression("asc|desc", ErrorMessage = "SortOrder harus 'asc' atau 'desc'.")]
     public string? SortOrder { get; set; } = "asc";
-    
+
+}
+
+public class PaginatedResponse<T>
+{
+    public List<T> Data { get; set; }
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+
+
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+    public PaginatedResponse(List<T> data, int totalCount, int page, int pageSize)
+    {
+        Data = data;
+        TotalCount = totalCount;
+        Page = page;
+        PageSize = pageSize;
+    }
+
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,7 +5,7 @@ using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    public class Menu: BaseEntity
+    public class Menu : BaseEntity
     {
         [Key]
         public int Id { get; set; }
@@ -32,8 +31,6 @@ namespace AuthService.Models
         public ICollection<Menu> Children { get; set; } = new List<Menu>();
 
         public int OrderIndex { get; set; } = 0;
-
-
 
         public ICollection<MenuPermission> MenuPermissions { get; set; } = new List<MenuPermission>();
     }

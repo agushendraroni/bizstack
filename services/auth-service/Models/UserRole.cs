@@ -2,9 +2,8 @@ using AuthService.Models.Base;
 
 namespace AuthService.Models
 {
-    public class UserRole:BaseEntity
+    public class UserRole : BaseEntity
     {
-        
         public int UserId { get; set; }
         public User? User { get; set; }
 

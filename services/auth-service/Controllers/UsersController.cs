@@ -1,101 +1,56 @@
-using AuthService.DTOs.Common;
 using AuthService.DTOs.User;
-using AuthService.Services.Interfaces;
+using AuthService.DTOs.Common;
+using AuthService.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Security.Claims;
 
 namespace AuthService.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsersController : ControllerBase
     {
-        private readonly IUserService _service;
+        private readonly IUserService _userService;
 
-        public UsersController(IUserService service)
+        public UsersController(IUserService userService)
         {
-            _service = service;
-        }
-
-        private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system";
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] UserFilterRequest filter)
-        {
-            var users = await _service.GetAllAsync(filter);
-            return Ok(ApiResponse<IEnumerable<UserResponse>>.SuccessResponse(users));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var user = await _service.GetByIdAsync(id);
-            if (user == null)
-                return NotFound(ApiResponse<object>.Fail("User not found"));
-
-            return Ok(ApiResponse<UserResponse>.SuccessResponse(user));
+            _userService = userService;
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors)
-                                              .Select(e => e.ErrorMessage);
-                return BadRequest(ApiResponse<object>.Fail("Validation failed", errors));
-            }
-
-            try
-            {
-                var createdUser = await _service.CreateAsync(request, GetUserId());
-                if (createdUser == null)
-                    return BadRequest(ApiResponse<object>.Fail("User creation failed"));
-
-                return CreatedAtAction(nameof(GetById), new { id = createdUser.Id },
-                    ApiResponse<UserResponse>.SuccessResponse(createdUser, "User created successfully"));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ApiResponse<object>.Fail("Internal server error", new[] { ex.Message }));
-            }
+            var result = await _userService.CreateAsync(request);
+            return Ok(ApiResponse<UserResponse>.SuccessResponse(result));
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors)
-                                              .Select(e => e.ErrorMessage);
-                return BadRequest(ApiResponse<object>.Fail("Validation failed", errors));
-            }
-
-            try
-            {
-                var updatedUser = await _service.UpdateAsync(id, request, GetUserId());
-                if (updatedUser == null)
-                    return NotFound(ApiResponse<object>.Fail("User not found"));
-
-                return Ok(ApiResponse<UserResponse>.SuccessResponse(updatedUser, "User updated successfully"));
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ApiResponse<object>.Fail("Internal server error", new[] { ex.Message }));
-            }
+            var result = await _userService.UpdateAsync(id, request);
+            return Ok(ApiResponse<UserResponse>.SuccessResponse(result));
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _service.DeleteAsync(id, GetUserId());
-            if (!deleted)
-                return NotFound(ApiResponse<object>.Fail("User not found"));
+            await _userService.DeleteAsync(id);
+            return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
+        }
 
-            return NoContent();
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _userService.GetByIdAsync(id);
+            return Ok(ApiResponse<UserResponse>.SuccessResponse(result));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] UserFilterRequest filter)
+        {
+            var result = await _userService.GetAllAsync(filter);
+            return Ok(ApiResponse<PaginatedResponse<UserResponse>>.SuccessResponse(result));
         }
     }
 }

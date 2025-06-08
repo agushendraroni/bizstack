@@ -1,13 +1,17 @@
-using AuthService.DTOs.UserRole;
-using AuthService.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AuthService.Services;
+using AuthService.Models;
+using AuthService.Services.Interfaces;
+using AuthService.DTOs.Common;
+using AuthService.DTOs.UserRole;
+
 
 namespace AuthService.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserRolesController : ControllerBase
     {
         private readonly IUserRoleService _service;
@@ -17,52 +21,40 @@ namespace AuthService.Controllers
             _service = service;
         }
 
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateUserRoleRequest request)
+        {
+            var result = await _service.CreateAsync(request);
+            return Ok(ApiResponse<UserRoleResponse>.SuccessResponse(result));
+        }
+
+        // Pakai userId dan roleId di route sebagai composite key
+        [HttpPut("{userId:int}/{roleId:int}")]
+        public async Task<IActionResult> Update(int userId, int roleId, [FromBody] UpdateUserRoleRequest request)
+        {
+            var result = await _service.UpdateAsync(userId, roleId, request);
+            return Ok(ApiResponse<UserRoleResponse>.SuccessResponse(result));
+        }
+
+        [HttpDelete("{userId:int}/{roleId:int}")]
+        public async Task<IActionResult> Delete(int userId, int roleId)
+        {
+            await _service.DeleteAsync(userId, roleId);
+            return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
+        }
+
+        [HttpGet("{userId:int}/{roleId:int}")]
+        public async Task<IActionResult> GetById(int userId, int roleId)
+        {
+            var result = await _service.GetByIdAsync(userId, roleId);
+            return Ok(ApiResponse<UserRoleResponse>.SuccessResponse(result));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] UserRoleFilterRequest filter)
         {
             var result = await _service.GetAllAsync(filter);
-            return Ok(result);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var result = await _service.GetByIdAsync(id);
-            return result == null ? NotFound() : Ok(result);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateUserRoleRequest request)
-        {
-            var result = await _service.CreateAsync(request);
-            // Gunakan composite key pada route values
-            return CreatedAtAction(
-                nameof(GetByCompositeKey),
-                new { userId = result.UserId, roleId = result.RoleId },
-                result
-            );
-        }
-
-        // Tambahkan endpoint untuk GetByCompositeKey
-        [HttpGet("by-key")]
-        public async Task<IActionResult> GetByCompositeKey([FromQuery] int userId, [FromQuery] int roleId)
-        {
-            var result = await _service.GetByCompositeKeyAsync(userId, roleId);
-            return result == null ? NotFound() : Ok(result);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, UpdateUserRoleRequest request)
-        {
-            var result = await _service.UpdateAsync(id, request);
-            return result == null ? NotFound() : Ok(result);
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var success = await _service.DeleteAsync(id);
-            return success ? NoContent() : NotFound();
+            return Ok(ApiResponse<PaginatedResponse<UserRoleResponse>>.SuccessResponse(result));
         }
     }
 }

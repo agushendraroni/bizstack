@@ -1,4 +1,3 @@
-
 namespace AuthService.DTOs.UserRole
 {
     public class CreateUserRoleRequest

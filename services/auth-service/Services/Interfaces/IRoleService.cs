@@ -1,17 +1,14 @@
-
-
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using AuthService.DTOs.Common;
 using AuthService.DTOs.Role;
 
-namespace AuthService.Services.Interfaces;
-
-
-public interface IRoleService
+namespace AuthService.Interfaces
 {
-    Task<RoleResponse> CreateAsync(CreateRoleRequest request, string currentUser);
-    Task<RoleResponse?> GetByIdAsync(int id);
-    Task<IEnumerable<RoleResponse>> GetAllAsync(RoleFilterRequest filter);
-    Task<RoleResponse?> UpdateAsync(int id, UpdateRoleRequest request, string currentUser);
-    Task<bool> DeleteAsync(int id);
+    public interface IRoleService
+    {
+        Task<RoleResponse?> GetByIdAsync(int id);
+        Task<PaginatedResponse<RoleResponse>> GetAllAsync(RoleFilterRequest filter);
+        Task<RoleResponse> CreateAsync(CreateRoleRequest request, string createdBy);
+        Task<RoleResponse?> UpdateAsync(int id, UpdateRoleRequest request, string updatedBy);
+        Task<bool> DeleteAsync(int id, string deletedBy);
+    }
 }

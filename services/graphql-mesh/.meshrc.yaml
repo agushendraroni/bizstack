@@ -1,0 +1,9 @@
+sources:
+  - name: AuthService
+    handler:
+      openapi:
+        source: http://auth-service:5282/swagger/v1/swagger.json
+
+serve:
+  port: 4000
+  playground: true

@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview AS base
 WORKDIR /app
-EXPOSE 5282
-ENV ASPNETCORE_URLS=http://+:5282
+EXPOSE 5283
+ENV ASPNETCORE_URLS=http://+:5283
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
 WORKDIR /src
