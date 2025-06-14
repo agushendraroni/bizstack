@@ -64,8 +64,8 @@ frontend_port=$(get_port frontend 80)
 
 echo ""
 echo "Service URLs (dinamis):"
-echo "- Auth Service:       http://localhost:$auth_port/swagger/index.html"
-echo "- User Service:       http://localhost:$user_port/swagger/index.html"
+echo "- Auth Service:       http://localhost:$auth_port/index.html"
+echo "- User Service:       http://localhost:$user_port/index.html"
 echo "- GraphQL Mesh:       http://localhost:$mesh_port"
 echo "- n8n Workflow:       http://localhost:$n8n_port"
 echo "- Frontend App:       http://localhost:$frontend_port"
