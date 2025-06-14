@@ -1,32 +1,22 @@
-using AuthService.Data;
-using AuthService.DTOs.Company;
 using SharedLibrary.DTOs;
-using AuthService.Interfaces;
-using AuthService.Models;
+using OrganizationService.Data;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using OrganizationService.DTOs.Company;
+using OrganizationService.Services.Interfaces;
+using OrganizationService.Models;
+using System.Collections.Generic;
 
 namespace OrganizationService.Services.Implementations
 {
-    public class CompanyService : ICompanyService
+    public class CompanyService(
+        OrganizationDbContext _context,
+        IMapper _mapper,
+        IValidator<CreateCompanyRequest> _createValidator,
+        IValidator<UpdateCompanyRequest> _updateValidator
+    ) : ICompanyService
     {
-        private readonly AuthDbContext _context;
-        private readonly IMapper _mapper;
-        private readonly IValidator<CreateCompanyRequest> _createValidator;
-        private readonly IValidator<UpdateCompanyRequest> _updateValidator;
-
-        public CompanyService(
-            AuthDbContext context,
-            IMapper mapper,
-            IValidator<CreateCompanyRequest> createValidator,
-            IValidator<UpdateCompanyRequest> updateValidator)
-        {
-            _context = context;
-            _mapper = mapper;
-            _createValidator = createValidator;
-            _updateValidator = updateValidator;
-        }
 
         public async Task<CompanyResponse> CreateAsync(CreateCompanyRequest request)
         {

@@ -1,8 +1,9 @@
 
 using SharedLibrary.DTOs;
-using AuthService.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OrganizationService.DTOs.Company; 
+using OrganizationService.Services.Interfaces;
 
 namespace OrganizationService.Controllers
 {

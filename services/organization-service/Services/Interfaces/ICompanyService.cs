@@ -1,4 +1,5 @@
-using AuthService.DTOs.Company;
+using System.Threading.Tasks;
+using OrganizationService.DTOs.Company;
 using SharedLibrary.DTOs;
 
 namespace OrganizationService.Services.Interfaces

@@ -1,6 +1,7 @@
 using AutoMapper;
-using AuthService.DTOs.Company;
-using AuthService.Models;
+using OrganizationService.DTOs.Company;
+using OrganizationService.Models;
+
 
 namespace OrganizationService.MappingProfiles
 {
