@@ -56,8 +56,8 @@ get_port() {
   docker-compose port "$service" "$container_port" | cut -d: -f2
 }
 
-auth_port=$(get_port auth-service 80)
-user_port=$(get_port user-service 80)
+auth_port=$(get_port auth-service 5282)
+user_port=$(get_port user-service 5283)
 mesh_port=$(get_port graphql-mesh 4000)
 n8n_port=$(get_port n8n 5678)
 frontend_port=$(get_port frontend 80)
