@@ -1,10 +1,10 @@
-using AuthService.DTOs.Company;
+
 using SharedLibrary.DTOs;
 using AuthService.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AuthService.Controllers
+namespace OrganizationService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

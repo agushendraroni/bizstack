@@ -15,7 +15,6 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using AuthService.Validation;
 using AuthService.Validation.Auth;
-using AuthService.Validation.Company;
 using AuthService.Validation.Menu;
 using AuthService.Validation.Permission;
 using AuthService.Validation.RolePermission;
@@ -90,6 +89,8 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 
 var app = builder.Build();
 

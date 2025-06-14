@@ -15,7 +15,7 @@ namespace AuthService.Models
 
         [Required]
         public int CompanyId { get; set; }
-        public Company Company { get; set; } = default!;
+
 
         [Required, MaxLength(128)]
         public string PasswordHash { get; set; } = default!;

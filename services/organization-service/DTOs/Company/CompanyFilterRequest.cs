@@ -1,7 +1,6 @@
 using SharedLibrary.DTOs;
 
-namespace AuthService.DTOs.Company
-{
+namespace OrganizationService.DTOs.Company{
     public class CompanyFilterRequest : PaginationFilter
     {
         public string? Name { get; set; }

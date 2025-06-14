@@ -12,7 +12,6 @@ namespace AuthService.Models
 
         [Required]
         public int CompanyId { get; set; }
-        public Company? Company { get; set; }
 
         [Required, MaxLength(100)]
         public required string Name { get; set; }

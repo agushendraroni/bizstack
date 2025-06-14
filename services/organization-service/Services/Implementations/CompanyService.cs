@@ -7,7 +7,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
 
-namespace AuthService.Services.Implementations
+namespace OrganizationService.Services.Implementations
 {
     public class CompanyService : ICompanyService
     {

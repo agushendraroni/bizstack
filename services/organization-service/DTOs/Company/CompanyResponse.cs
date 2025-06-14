@@ -1,4 +1,4 @@
-namespace AuthService.DTOs.Company
+namespace OrganizationService.DTOs.Company
 {
     public class CompanyResponse
     {

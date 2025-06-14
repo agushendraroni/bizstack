@@ -1,7 +1,7 @@
 using AuthService.DTOs.Company;
 using SharedLibrary.DTOs;
 
-namespace AuthService.Interfaces
+namespace OrganizationService.Services.Interfaces
 {
     public interface ICompanyService
     {

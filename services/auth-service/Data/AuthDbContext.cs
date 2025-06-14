@@ -8,7 +8,6 @@ namespace AuthService.Data
     {
 
         // DbSets
-        public DbSet<Company> Companies { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
@@ -50,32 +49,6 @@ namespace AuthService.Data
                 .HasForeignKey(m => m.ParentId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Company ↔ Users
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Company)
-                .WithMany(c => c.Users)
-                .HasForeignKey(u => u.CompanyId);
-
-            // Company ↔ Roles
-            modelBuilder.Entity<Role>()
-                .HasOne(r => r.Company)
-                .WithMany(c => c.Roles)
-                .HasForeignKey(r => r.CompanyId);
-
-
-            // Company ↔ Permissions
-            modelBuilder.Entity<Permission>()
-                .HasOne(p => p.Company)
-                .WithMany(c => c.Permissions)
-                .HasForeignKey(p => p.CompanyId);
-
-            // Company ↔ Menus
-            modelBuilder.Entity<Menu>()
-                .HasOne(m => m.Company)
-                .WithMany(c => c.Menus)
-                .HasForeignKey(m => m.CompanyId);
-
-    
 
             modelBuilder.Entity<RefreshToken>()
                 .HasOne(rt => rt.User)

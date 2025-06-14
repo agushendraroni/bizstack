@@ -2,7 +2,7 @@ using AutoMapper;
 using AuthService.DTOs.Company;
 using AuthService.Models;
 
-namespace AuthService.Mappings
+namespace OrganizationService.MappingProfiles
 {
     public class CompanyProfile : Profile
     {

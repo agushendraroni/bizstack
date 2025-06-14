@@ -11,7 +11,7 @@ namespace AuthService.Models
 
         [Required]
         public int CompanyId { get; set; }
-        public Company? Company { get; set; }
+
 
         [Required, MaxLength(100)]
         public string Name { get; set; } = string.Empty; // e.g. "user:create", "menu:dashboard"
