@@ -3,7 +3,7 @@
 services:
   n8n:
     image: n8nio/n8n
-    container_name: frameworkx-n8n
+    container_name: BizStack-n8n
     restart: always
     ports:
       - "5678:5678"
@@ -25,7 +25,7 @@ services:
     build:
       context: ./services/auth-service
       dockerfile: Dockerfile
-    container_name: frameworkx-auth-service
+    container_name: BizStack-auth-service
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -39,7 +39,7 @@ services:
     build:
       context: ./services/user-service
       dockerfile: Dockerfile
-    container_name: frameworkx-user-service
+    container_name: BizStack-user-service
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -53,7 +53,7 @@ services:
     build:
       context: ./services/graphql-mesh
       dockerfile: Dockerfile
-    container_name: frameworkx-graphql-mesh
+    container_name: BizStack-graphql-mesh
     restart: always
     ports:
       - "4000:4000"
@@ -65,7 +65,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frameworkx-frontend
+    container_name: BizStack-frontend
     restart: always
     ports:
       - "3000:80"

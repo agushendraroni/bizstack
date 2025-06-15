@@ -37,7 +37,7 @@ echo "📛 Source .csproj: $SRC_CSPROJ_FILENAME"
 echo "📛 Destination .csproj: $DEST_CSPROJ_FILENAME"
 
 # Solution path
-DEFAULT_SOLUTION_PATH="../frameworkX.sln"
+DEFAULT_SOLUTION_PATH="../BizStack.sln"
 read -p "🛠 Path to solution file (default: $DEFAULT_SOLUTION_PATH): " SLN_PATH
 SLN_PATH="${SLN_PATH:-$DEFAULT_SOLUTION_PATH}"
 

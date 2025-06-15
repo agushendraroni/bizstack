@@ -9,20 +9,20 @@ read -p "Choose build option [1-4]: " build_option
 
 build_frontend() {
   echo "Building frontend..."
-  docker buildx build -t frameworkx-frontend ./frontend --load
+  docker buildx build -t BizStack-frontend ./frontend --load
   echo "✅ Built frontend"
 }
 
 build_backend() {
   echo "Building backend services..."
 
-  docker buildx build -t frameworkx-auth-service ./services/auth-service --load
+  docker buildx build -t BizStack-auth-service ./services/auth-service --load
   echo "✅ Built auth-service"
 
-  docker buildx build -t frameworkx-user-service ./services/user-service --load
+  docker buildx build -t BizStack-user-service ./services/user-service --load
   echo "✅ Built user-service"
 
-  docker buildx build -t frameworkx-graphql-mesh ./services/graphql-mesh --load
+  docker buildx build -t BizStack-graphql-mesh ./services/graphql-mesh --load
   echo "✅ Built graphql-mesh"
 }
 
