@@ -1,6 +1,6 @@
-# FrameworkX
+# BizStack
 
-FrameworkX adalah kerangka kerja mikro yang sederhana dan cepat untuk membangun aplikasi web reaktif yang dapat berjalan di mana saja.
+**BizStack** is a reusable monorepo architecture for rapidly building MVPs for small to medium-sized businesses. It's designed to be modular, extensible, and production-ready from day one.
 
 ## Fitur
 
@@ -22,8 +22,8 @@ Pastikan Anda telah menginstal:
 Clone repositori ini:
 
 ```bash
-git clone https://github.com/agushendraroni/frameworkX.git
-cd frameworkX
+git clone https://github.com/agushendraroni/Bizstack.git
+cd Bizstack
 ```
 
 Jalankan layanan dengan Docker Compose:
@@ -32,21 +32,45 @@ Jalankan layanan dengan Docker Compose:
 docker-compose up -d
 ```
 
-## Struktur Proyek
+## 🚀 Services Overview
 
-```
-frameworkX/
-├── apps/
-│   ├── frontend/              # Frontend React (Shards Dashboard)
-│   ├── backend/
-│   │   ├── auth-service/      # Auth service dengan JWT & unit test
-│   │   ├── user-service/      # Manajemen user, Swagger, request model
-│   │   └── ...                # Microservice lainnya (document, file, dll)
-│   └── automation/            # Workflow n8n
-├── .github/                   # CI/CD atau workflow GitHub Actions
-├── docker-compose.yml         # Orkestrasi container
-└── README.md
-```
+| Service              | Status | Description                                           |
+|----------------------|--------|-------------------------------------------------------|
+| `auth-service`       | ✅      | Login, JWT, Refresh Token                            |
+| `user-service`       | ✅      | Admin, Kasir, Karyawan, Guru                         |
+| `product-service`    | ✅      | Barang, Modul Kursus, Layanan                        |
+| `settings-service`   | ✅      | Nama toko, organisasi, tenant                        |
+| `customer-service`   | ✅      | Pelanggan toko, siswa, client                        |
+| `notification-service` | ✅    | Email, WhatsApp, Push Notification                   |
+| `report-service`     | ✅      | Semua sistem perlu laporan                           |
+| `file-storage-service` | ✅    | Upload struk, logo, foto produk                      |
+
+## 📦 Technologies Used
+
+- .NET 8 (C#)
+- PostgreSQL
+- AutoMapper, FluentValidation
+- JWT Authentication
+- Minimal API / RESTful Controllers
+- n8n (for automation workflows)
+- React (Shards Dashboard for frontends)
+
+---
+
+## ✅ Goals
+
+- MVP-ready for UMKM (retail, edukasi, bengkel, reseller, kursus)
+- Dapat di-reuse untuk bisnis lainnya
+- Developer-friendly structure
+- Scalable & maintainable codebase
+
+---
+
+## 🛠 Setup Instructions
+
+Coming soon...
+
+---
 
 ## Kontribusi
 
