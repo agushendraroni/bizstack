@@ -1,129 +1,120 @@
 # 🧭 FrameworkX Microservices Roadmap
 
-Arsitektur proyek ini mengadopsi pendekatan **microservices modular** untuk memastikan skalabilitas, maintainability, dan pemisahan tanggung jawab yang jelas antar domain.
+Proyek ini menggunakan arsitektur **microservices** berbasis `.NET`, untuk membagi tanggung jawab per domain agar mudah di-scale, dimaintain, dan dikembangkan secara independen.
 
 ---
 
-## 📌 Core Services
+## ✅ Selesai
 
 ### 🔐 Auth Service
-- **Fungsi**: Autentikasi dan otorisasi berbasis JWT.
+- **Fungsi**: Autentikasi dan otorisasi pengguna.
+- **Status**: ✅ Completed
 - **Fitur**:
-  - Login & Refresh Token
-  - Role & Permission Management
-  - Menu & Access Control
-  - Password history & policy
+  - Login, Refresh Token (JWT)
+  - Role, Permission, dan User Management
+  - Menu dan Akses Kontrol
+  - Password History
+  - Audit Trail, Soft Delete, Filtering, Pagination
 - 📂 Folder: `services/auth-service`
 
 ---
 
+## 🏗️ Dalam Proses / Belum Dibuat
+
 ### 👤 User Service
-- **Fungsi**: Manajemen data pengguna non-authentikasi.
-- **Fitur**:
-  - Biodata pengguna (profile, kontak)
-  - Relasi ke Company / Employee / Preference
-- 📂 Folder: `services/user-service`
+- **Fungsi**: Menyimpan data pribadi pengguna (non-auth).
+- **Status**: ⏳ Planned
+- **Model yang akan dikelola**:
+  - `UserProfile` (foto, kontak, alamat)
+  - `UserSetting`, `UserPreference` (opsional)
+  - Relasi ke `Employee`, `Company`
 
 ---
 
 ### 🏢 Organization Service
-- **Fungsi**: Menyimpan informasi struktur organisasi/perusahaan.
-- **Fitur**:
-  - Data perusahaan (nama, NPWP, alamat)
-  - Struktur hierarki (grup, cabang, unit)
-  - Legal documents (SIUP, NIB, dsb)
-- 📂 Folder: `services/organization-service`
+- **Fungsi**: Menyimpan data organisasi/perusahaan.
+- **Status**: ⏳ Planned
+- **Model**:
+  - `Company`, `OrganizationUnit`, `CompanyDocument`
 
 ---
 
 ### 👥 HR Service
-- **Fungsi**: Manajemen karyawan dan struktur SDM.
-- **Fitur**:
-  - Employee, Job Title, Department, Position
-  - Assignment ke unit organisasi
-- 📂 Folder: `services/hr-service`
+- **Fungsi**: Manajemen data SDM dan struktur kerja.
+- **Status**: ⏳ Planned
+- **Model**:
+  - `Employee`, `JobTitle`, `Department`, `Position`
+  - Relasi ke `OrganizationService` (Company/Unit)
 
 ---
 
-## 📂 Document & Storage Services
-
-### 📄 Document Service *(Planned)*
-- **Fungsi**: Abstraksi dokumen bisnis.
-- **Fitur**:
-  - Metadata dokumen: jenis, status, pemilik
-  - Versi dokumen
-  - Relasi ke entity (company, user, dsb)
-- 📂 Folder: `services/document-service`
+### ⚙️ Preference Service
+- **Fungsi**: Menyimpan pengaturan dan preferensi pengguna.
+- **Status**: 🔲 Not Started
+- **Model**:
+  - `UserPreference` (theme, language, layout)
+  - `SystemPreference`, `DefaultSettings`
 
 ---
 
-### 📦 File Storage Service *(Planned)*
-- **Fungsi**: Menyimpan file mentah (raw file storage).
-- **Fitur**:
-  - Upload/download/hapus file
-  - Penyimpanan di filesystem / S3 / MinIO
-  - Metadata file (size, mime-type, owner)
-- 📂 Folder: `services/file-storage-service`
+### 📄 Document Service
+- **Fungsi**: Menyimpan metadata dokumen.
+- **Status**: 🔲 Not Started
+- **Model**:
+  - `Document`, `DocumentType`, `DocumentVersion`, `Tag`, `ReferenceId`, `OwnerType`
 
 ---
 
-## ⚙️ Support & Utility Services
-
-### ⚙️ Preference Service *(Planned)*
-- **Fungsi**: Menyimpan preferensi atau pengaturan user/system.
-- **Fitur**:
-  - Theme, Language, Notification setting
-  - Default page, custom field, dsb
-- 📂 Folder: `services/preference-service`
+### 📦 File Storage Service
+- **Fungsi**: Menyimpan file binary (PDF, gambar, dsb).
+- **Status**: 🔲 Not Started
+- **Model**:
+  - `StoredFile`, `FileGroup`, `StorageProvider`
+- **Catatan**: Hanya menyimpan path & metadata, file disimpan di S3 / MinIO / local.
 
 ---
 
-## 🔧 Shared Library
+## 📚 Shared Library
 
-### 📚 `shared-library`
-- Reusable class: DTOs, middleware, JWT utils, hashing, attributes, etc.
-- Digunakan lintas service untuk standarisasi.
+### 🧩 `shared-library`
+- **Fungsi**: Menyediakan reusable komponen:
+  - DTO, middleware, JWT, password hashing
+  - Audit attributes, base entities
 - 📂 Folder: `shared-library`
+- **Status**: 🛠 Digunakan aktif oleh AuthService
 
 ---
 
-## 🔁 Automation
+## 🧠 Roadmap Pengembangan
 
-### ⚙️ n8n Service
-- Orkestrasi automation & data sync.
-- 📂 Folder: `automation/n8n`
-
----
-
-## 📈 Roadmap Next Steps
-
-| Task                                     | Status     |
-|------------------------------------------|------------|
-| ✅ Setup Auth Service                    | Completed  |
-| ✅ Setup User Service                    | Completed  |
-| ✅ Setup Organization Service           | Completed  |
-| ✅ Setup HR Service                      | Completed  |
-| 🟡 Document Service (metadata)          | In Progress|
-| 🟡 File Storage Service (low-level)     | In Progress|
-| 🔲 Preference Service                   | Planned    |
-| 🔲 Audit Logging Service                | Planned    |
-| 🔲 Notification Service (email/sms)     | Planned    |
-| 🔲 Search/Indexing Service              | Planned    |
+| Service               | Status       | Catatan                            |
+|------------------------|--------------|-------------------------------------|
+| Auth Service           | ✅ Completed | Sudah lengkap dengan JWT, audit     |
+| User Service           | 🔲 Planned   | Akan handle data pribadi user       |
+| Organization Service   | 🔲 Planned   | Struktur perusahaan & unit kerja    |
+| HR Service             | 🔲 Planned   | Employee & posisi kerja             |
+| Preference Service     | 🔲 Planned   | Preferensi UI/UX pengguna           |
+| Document Service       | 🔲 Planned   | Metadata dokumen legal/internal     |
+| File Storage Service   | 🔲 Planned   | Penyimpanan file fisik (S3/MinIO)   |
 
 ---
 
-## 🧠 Notes
+## 📌 Catatan Penggunaan
 
-- Semua service diatur dengan struktur `-service` dan berada dalam folder `services/`.
-- Setiap service memiliki namespace yang konsisten dengan format PascalCase (`AuthService`, `UserService`, dsb).
-- Untuk membuat service baru dari template eksisting, gunakan `duplicate-clean-service.sh`.
+- Semua service disimpan di dalam folder `services/`
+- Namespace disesuaikan dengan nama PascalCase: `AuthService`, `UserService`, dst.
+- Untuk kloning service dari template eksisting, gunakan script: `duplicate-clean-service.sh`
+- Semua service akan menggunakan JWT Auth, Swagger, dan Middleware Standar
 
 ---
 
-## 📌 Referensi
+## 🔧 Stack Teknologi
 
-- Tech Stack: `.NET`, `EF Core`, `PostgreSQL`, `React`, `n8n`, `Docker`
-- Deployment: Monorepo, GitHub Actions (planned), Containerized
+- Backend: `.NET`, `EF Core`, `PostgreSQL`
+- Frontend: `React` + `Shards Dashboard`
+- Automasi: `n8n`
+- Container: `Docker`, `Docker Compose`
+- Dev Tools: `shell script`, `GitHub`, `monorepo`
 
 ---
 
