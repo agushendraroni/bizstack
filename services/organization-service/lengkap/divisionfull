@@ -1,0 +1,200 @@
+// =======================
+// File: DTOs/Division/CreateDivisionRequest.cs
+// =======================
+
+namespace OrganizationService.DTOs.Division;
+
+public class CreateDivisionRequest
+{
+    public Guid DepartmentId { get; set; }
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+}
+
+public class UpdateDivisionRequest
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+}
+
+public class DivisionResponse
+{
+    public Guid Id { get; set; }
+    public Guid DepartmentId { get; set; }
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime? ChangedAt { get; set; }
+    public string? ChangedBy { get; set; }
+}
+
+public class DivisionFilterRequest : PaginationFilter
+{
+    public string? Name { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+// =======================
+// File: Models/Division.cs
+// =======================
+
+namespace OrganizationService.Models;
+
+public class Division : BaseEntity
+{
+    public Guid DepartmentId { get; set; }
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+    public Department Department { get; set; } = default!;
+}
+
+// =======================
+// File: Services/Interfaces/IDivisionService.cs
+// =======================
+
+namespace OrganizationService.Services.Interfaces;
+
+public interface IDivisionService
+{
+    Task<DivisionResponse> CreateAsync(CreateDivisionRequest request, string currentUser);
+    Task<DivisionResponse?> GetByIdAsync(Guid id);
+    Task<PaginatedResponse<DivisionResponse>> GetFilteredAsync(DivisionFilterRequest filter);
+}
+
+// =======================
+// File: Services/Implementations/DivisionService.cs
+// =======================
+
+namespace OrganizationService.Services.Implementations;
+
+public class DivisionService : IDivisionService
+{
+    private readonly CompanyDbContext _context;
+    private readonly IMapper _mapper;
+
+    public DivisionService(CompanyDbContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+
+    public async Task<DivisionResponse> CreateAsync(CreateDivisionRequest request, string currentUser)
+    {
+        var entity = _mapper.Map<Division>(request);
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedBy = currentUser;
+        entity.IsActive = true;
+
+        _context.Divisions.Add(entity);
+        await _context.SaveChangesAsync();
+
+        return _mapper.Map<DivisionResponse>(entity);
+    }
+
+    public async Task<DivisionResponse?> GetByIdAsync(Guid id)
+    {
+        var entity = await _context.Divisions.Include(x => x.Department).FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : _mapper.Map<DivisionResponse>(entity);
+    }
+
+    public async Task<PaginatedResponse<DivisionResponse>> GetFilteredAsync(DivisionFilterRequest filter)
+    {
+        var query = _context.Divisions.AsQueryable();
+
+        if (!string.IsNullOrEmpty(filter.Name))
+            query = query.Where(x => x.Name.Contains(filter.Name));
+        if (filter.DepartmentId.HasValue)
+            query = query.Where(x => x.DepartmentId == filter.DepartmentId);
+        if (filter.IsActive.HasValue)
+            query = query.Where(x => x.IsActive == filter.IsActive);
+
+        var totalCount = await query.CountAsync();
+        var data = await query.Skip((filter.Page - 1) * filter.PageSize)
+                               .Take(filter.PageSize)
+                               .ToListAsync();
+
+        var mapped = _mapper.Map<List<DivisionResponse>>(data);
+        return new PaginatedResponse<DivisionResponse>(mapped, totalCount, filter.Page, filter.PageSize);
+    }
+}
+
+// =======================
+// File: Controllers/DivisionsController.cs
+// =======================
+
+namespace OrganizationService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class DivisionsController : ControllerBase
+{
+    private readonly IDivisionService _service;
+
+    public DivisionsController(IDivisionService service)
+    {
+        _service = service;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateDivisionRequest request)
+    {
+        var result = await _service.CreateAsync(request, "system");
+        return Ok(ApiResponse<DivisionResponse>.SuccessResponse(result));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _service.GetByIdAsync(id);
+        if (result == null) return NotFound(ApiResponse<string>.Fail("Not found"));
+        return Ok(ApiResponse<DivisionResponse>.SuccessResponse(result));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetFiltered([FromQuery] DivisionFilterRequest filter)
+    {
+        var result = await _service.GetFilteredAsync(filter);
+        return Ok(ApiResponse<PaginatedResponse<DivisionResponse>>.SuccessResponse(result));
+    }
+}
+
+// =======================
+// File: Mapping/DivisionProfile.cs
+// =======================
+
+namespace OrganizationService.Mapping;
+
+public class DivisionProfile : Profile
+{
+    public DivisionProfile()
+    {
+        CreateMap<CreateDivisionRequest, Division>();
+        CreateMap<Division, DivisionResponse>();
+    }
+}
+
+// =======================
+// File: Validation/DivisionValidator.cs
+// =======================
+
+namespace OrganizationService.Validation;
+
+public class CreateDivisionValidator : AbstractValidator<CreateDivisionRequest>
+{
+    public CreateDivisionValidator()
+    {
+        RuleFor(x => x.DepartmentId).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+    }
+}
+
+public class UpdateDivisionValidator : AbstractValidator<UpdateDivisionRequest>
+{
+    public UpdateDivisionValidator()
+    {
+        RuleFor(x => x.Name).MaximumLength(100);
+    }
+}

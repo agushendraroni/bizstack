@@ -1,0 +1,192 @@
+// =======================
+// File: DTOs/Position/CreatePositionRequest.cs
+// =======================
+
+namespace OrganizationService.DTOs.Position;
+
+public class CreatePositionRequest
+{
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+}
+
+public class UpdatePositionRequest
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+}
+
+public class PositionResponse
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime? ChangedAt { get; set; }
+    public string? ChangedBy { get; set; }
+}
+
+public class PositionFilterRequest : PaginationFilter
+{
+    public string? Name { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+// =======================
+// File: Models/Position.cs
+// =======================
+
+namespace OrganizationService.Models;
+
+public class Position : BaseEntity
+{
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+}
+
+// =======================
+// File: Services/Interfaces/IPositionService.cs
+// =======================
+
+namespace OrganizationService.Services.Interfaces;
+
+public interface IPositionService
+{
+    Task<PositionResponse> CreateAsync(CreatePositionRequest request, string currentUser);
+    Task<PositionResponse?> GetByIdAsync(Guid id);
+    Task<PaginatedResponse<PositionResponse>> GetFilteredAsync(PositionFilterRequest filter);
+}
+
+// =======================
+// File: Services/Implementations/PositionService.cs
+// =======================
+
+namespace OrganizationService.Services.Implementations;
+
+public class PositionService : IPositionService
+{
+    private readonly CompanyDbContext _context;
+    private readonly IMapper _mapper;
+
+    public PositionService(CompanyDbContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+
+    public async Task<PositionResponse> CreateAsync(CreatePositionRequest request, string currentUser)
+    {
+        var entity = _mapper.Map<Position>(request);
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedBy = currentUser;
+        entity.IsActive = true;
+
+        _context.Positions.Add(entity);
+        await _context.SaveChangesAsync();
+
+        return _mapper.Map<PositionResponse>(entity);
+    }
+
+    public async Task<PositionResponse?> GetByIdAsync(Guid id)
+    {
+        var entity = await _context.Positions.FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : _mapper.Map<PositionResponse>(entity);
+    }
+
+    public async Task<PaginatedResponse<PositionResponse>> GetFilteredAsync(PositionFilterRequest filter)
+    {
+        var query = _context.Positions.AsQueryable();
+
+        if (!string.IsNullOrEmpty(filter.Name))
+            query = query.Where(x => x.Name.Contains(filter.Name));
+        if (filter.IsActive.HasValue)
+            query = query.Where(x => x.IsActive == filter.IsActive);
+
+        var totalCount = await query.CountAsync();
+        var data = await query.Skip((filter.Page - 1) * filter.PageSize)
+                               .Take(filter.PageSize)
+                               .ToListAsync();
+
+        var mapped = _mapper.Map<List<PositionResponse>>(data);
+        return new PaginatedResponse<PositionResponse>(mapped, totalCount, filter.Page, filter.PageSize);
+    }
+}
+
+// =======================
+// File: Controllers/PositionsController.cs
+// =======================
+
+namespace OrganizationService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class PositionsController : ControllerBase
+{
+    private readonly IPositionService _service;
+
+    public PositionsController(IPositionService service)
+    {
+        _service = service;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreatePositionRequest request)
+    {
+        var result = await _service.CreateAsync(request, "system");
+        return Ok(ApiResponse<PositionResponse>.SuccessResponse(result));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _service.GetByIdAsync(id);
+        if (result == null) return NotFound(ApiResponse<string>.Fail("Not found"));
+        return Ok(ApiResponse<PositionResponse>.SuccessResponse(result));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetFiltered([FromQuery] PositionFilterRequest filter)
+    {
+        var result = await _service.GetFilteredAsync(filter);
+        return Ok(ApiResponse<PaginatedResponse<PositionResponse>>.SuccessResponse(result));
+    }
+}
+
+// =======================
+// File: Mapping/PositionProfile.cs
+// =======================
+
+namespace OrganizationService.Mapping;
+
+public class PositionProfile : Profile
+{
+    public PositionProfile()
+    {
+        CreateMap<CreatePositionRequest, Position>();
+        CreateMap<Position, PositionResponse>();
+    }
+}
+
+// =======================
+// File: Validation/PositionValidator.cs
+// =======================
+
+namespace OrganizationService.Validation;
+
+public class CreatePositionValidator : AbstractValidator<CreatePositionRequest>
+{
+    public CreatePositionValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
+    }
+}
+
+public class UpdatePositionValidator : AbstractValidator<UpdatePositionRequest>
+{
+    public UpdatePositionValidator()
+    {
+        RuleFor(x => x.Name).MaximumLength(100);
+    }
+}

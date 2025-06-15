@@ -27,21 +27,21 @@ namespace OrganizationService.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateCompanyRequest request)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCompanyRequest request)
         {
             var result = await _companyService.UpdateAsync(id, request);
             return Ok(ApiResponse<CompanyResponse>.SuccessResponse(result));
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             await _companyService.DeleteAsync(id);
             return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _companyService.GetByIdAsync(id);
             return Ok(ApiResponse<CompanyResponse>.SuccessResponse(result));

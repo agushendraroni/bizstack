@@ -7,9 +7,9 @@ namespace OrganizationService.Services.Interfaces
     public interface ICompanyService
     {
         Task<CompanyResponse> CreateAsync(CreateCompanyRequest request);
-        Task<CompanyResponse> UpdateAsync(int id, UpdateCompanyRequest request);
-        Task<bool> DeleteAsync(int id);
-        Task<CompanyResponse> GetByIdAsync(int id);
+        Task<CompanyResponse> UpdateAsync(Guid id, UpdateCompanyRequest request);
+        Task<bool> DeleteAsync(Guid id);
+        Task<CompanyResponse> GetByIdAsync(Guid id);
         Task<PaginatedResponse<CompanyResponse>> GetAllAsync(CompanyFilterRequest filter);
     }
 }

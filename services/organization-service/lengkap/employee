@@ -1,0 +1,208 @@
+// =======================
+// File: DTOs/Employee/CreateEmployeeRequest.cs
+// =======================
+
+namespace OrganizationService.DTOs.Employee;
+
+public class CreateEmployeeRequest
+{
+    public string FullName { get; set; } = default!;
+    public Guid UserId { get; set; }
+    public Guid DepartmentId { get; set; }
+    public Guid PositionId { get; set; }
+}
+
+public class UpdateEmployeeRequest
+{
+    public string? FullName { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public Guid? PositionId { get; set; }
+}
+
+public class EmployeeResponse
+{
+    public Guid Id { get; set; }
+    public string FullName { get; set; } = default!;
+    public Guid UserId { get; set; }
+    public Guid DepartmentId { get; set; }
+    public Guid PositionId { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime? ChangedAt { get; set; }
+    public string? ChangedBy { get; set; }
+}
+
+public class EmployeeFilterRequest : PaginationFilter
+{
+    public string? FullName { get; set; }
+    public bool? IsActive { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public Guid? PositionId { get; set; }
+}
+
+// =======================
+// File: Models/Employee.cs
+// =======================
+
+namespace OrganizationService.Models;
+
+public class Employee : BaseEntity
+{
+    public string FullName { get; set; } = default!;
+    public Guid UserId { get; set; }
+    public Guid DepartmentId { get; set; }
+    public Guid PositionId { get; set; }
+}
+
+// =======================
+// File: Services/Interfaces/IEmployeeService.cs
+// =======================
+
+namespace OrganizationService.Services.Interfaces;
+
+public interface IEmployeeService
+{
+    Task<EmployeeResponse> CreateAsync(CreateEmployeeRequest request, string currentUser);
+    Task<EmployeeResponse?> GetByIdAsync(Guid id);
+    Task<PaginatedResponse<EmployeeResponse>> GetFilteredAsync(EmployeeFilterRequest filter);
+}
+
+// =======================
+// File: Services/Implementations/EmployeeService.cs
+// =======================
+
+namespace OrganizationService.Services.Implementations;
+
+public class EmployeeService : IEmployeeService
+{
+    private readonly CompanyDbContext _context;
+    private readonly IMapper _mapper;
+
+    public EmployeeService(CompanyDbContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+
+    public async Task<EmployeeResponse> CreateAsync(CreateEmployeeRequest request, string currentUser)
+    {
+        var entity = _mapper.Map<Employee>(request);
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedBy = currentUser;
+        entity.IsActive = true;
+
+        _context.Employees.Add(entity);
+        await _context.SaveChangesAsync();
+
+        return _mapper.Map<EmployeeResponse>(entity);
+    }
+
+    public async Task<EmployeeResponse?> GetByIdAsync(Guid id)
+    {
+        var entity = await _context.Employees.FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : _mapper.Map<EmployeeResponse>(entity);
+    }
+
+    public async Task<PaginatedResponse<EmployeeResponse>> GetFilteredAsync(EmployeeFilterRequest filter)
+    {
+        var query = _context.Employees.AsQueryable();
+
+        if (!string.IsNullOrEmpty(filter.FullName))
+            query = query.Where(x => x.FullName.Contains(filter.FullName));
+        if (filter.IsActive.HasValue)
+            query = query.Where(x => x.IsActive == filter.IsActive);
+        if (filter.DepartmentId.HasValue)
+            query = query.Where(x => x.DepartmentId == filter.DepartmentId);
+        if (filter.PositionId.HasValue)
+            query = query.Where(x => x.PositionId == filter.PositionId);
+
+        var totalCount = await query.CountAsync();
+        var data = await query.Skip((filter.Page - 1) * filter.PageSize)
+                               .Take(filter.PageSize)
+                               .ToListAsync();
+
+        var mapped = _mapper.Map<List<EmployeeResponse>>(data);
+        return new PaginatedResponse<EmployeeResponse>(mapped, totalCount, filter.Page, filter.PageSize);
+    }
+}
+
+// =======================
+// File: Controllers/EmployeesController.cs
+// =======================
+
+namespace OrganizationService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class EmployeesController : ControllerBase
+{
+    private readonly IEmployeeService _service;
+
+    public EmployeesController(IEmployeeService service)
+    {
+        _service = service;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
+    {
+        var result = await _service.CreateAsync(request, "system");
+        return Ok(ApiResponse<EmployeeResponse>.SuccessResponse(result));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _service.GetByIdAsync(id);
+        if (result == null) return NotFound(ApiResponse<string>.Fail("Not found"));
+        return Ok(ApiResponse<EmployeeResponse>.SuccessResponse(result));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetFiltered([FromQuery] EmployeeFilterRequest filter)
+    {
+        var result = await _service.GetFilteredAsync(filter);
+        return Ok(ApiResponse<PaginatedResponse<EmployeeResponse>>.SuccessResponse(result));
+    }
+}
+
+// =======================
+// File: Mapping/EmployeeProfile.cs
+// =======================
+
+namespace OrganizationService.Mapping;
+
+public class EmployeeProfile : Profile
+{
+    public EmployeeProfile()
+    {
+        CreateMap<CreateEmployeeRequest, Employee>();
+        CreateMap<Employee, EmployeeResponse>();
+    }
+}
+
+// =======================
+// File: Validation/EmployeeValidator.cs
+// =======================
+
+namespace OrganizationService.Validation;
+
+public class CreateEmployeeValidator : AbstractValidator<CreateEmployeeRequest>
+{
+    public CreateEmployeeValidator()
+    {
+        RuleFor(x => x.FullName).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.UserId).NotEmpty();
+        RuleFor(x => x.DepartmentId).NotEmpty();
+        RuleFor(x => x.PositionId).NotEmpty();
+    }
+}
+
+public class UpdateEmployeeValidator : AbstractValidator<UpdateEmployeeRequest>
+{
+    public UpdateEmployeeValidator()
+    {
+        RuleFor(x => x.FullName).MaximumLength(100);
+    }
+}

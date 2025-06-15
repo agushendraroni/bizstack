@@ -30,7 +30,7 @@ namespace OrganizationService.Services.Implementations
             return _mapper.Map<CompanyResponse>(company);
         }
 
-        public async Task<CompanyResponse> UpdateAsync(int id, UpdateCompanyRequest request)
+        public async Task<CompanyResponse> UpdateAsync(Guid id, UpdateCompanyRequest request)
         {
             var validationResult = await _updateValidator.ValidateAsync(request);
             if (!validationResult.IsValid)
@@ -45,7 +45,7 @@ namespace OrganizationService.Services.Implementations
             return _mapper.Map<CompanyResponse>(company);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
             var company = await _context.Companies.FindAsync(id)
                 ?? throw new KeyNotFoundException("Company not found");
@@ -56,7 +56,7 @@ namespace OrganizationService.Services.Implementations
             return true;
         }
 
-        public async Task<CompanyResponse> GetByIdAsync(int id)
+        public async Task<CompanyResponse> GetByIdAsync(Guid id)
         {
             var company = await _context.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted)

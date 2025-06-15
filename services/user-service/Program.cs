@@ -1,93 +1,108 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using UserService.Data;
+using UserService.Services.Implementations;
+using UserService.Services.Interfaces;
+using UserService.Validation.Company;
+using SharedLibrary.Middlewares;
+using SharedLibrary.Security.JWT;
+using SharedLibrary.Security.Password;
 using System.Text;
-using Users.Data;
-using Users.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add connection string in appsettings.json or here directly (disarankan di appsettings.json)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// --- Controllers & Swagger ---
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Register DbContext with PostgreSQL
-builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseNpgsql(connectionString));
+// --- AutoMapper (opsional) ---
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Register IUsersService dan implementasinya
-builder.Services.AddScoped<IUsersService, UsersService>();
+// --- HttpContextAccessor ---
+builder.Services.AddHttpContextAccessor();
 
-
-// JWT Configuration
-string jwtSecret = "your_super_secret_key_123!";
-string issuer = "auth-service";
-string audience = "user-service";
-
-builder.Services.AddAuthentication(options =>
+// --- Inject UserDbContext with Audit Info ---
+builder.Services.AddScoped<UserDbContext>(provider =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidIssuer = issuer,
-        ValidateAudience = true,
-        ValidAudience = audience,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-        ValidateLifetime = true
-    };
+    var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
+    var user = httpContextAccessor.HttpContext?.User;
+
+    var username = user?.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(user.Identity.Name)
+        ? user.Identity.Name
+        : "system"; // fallback if unauthenticated
+
+    var options = provider.GetRequiredService<DbContextOptions<UserDbContext>>();
+    return new UserDbContext(options, username); // Make sure your DbContext supports this
 });
 
-builder.Services.AddControllers();
+// --- DB Context ---
+builder.Services.AddDbContext<UserDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Swagger Configuration with JWT support
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "User Service API",
-        Version = "v1"
-    });
+// --- Internal Services ---
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Enter 'Bearer {token}'",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
+// --- JWT Authentication ---
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+if (jwtSettings == null)
+    throw new InvalidOperationException("JwtSettings section is missing or invalid in configuration.");
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            new string[] {}
-        }
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+// --- FluentValidation ---
+builder.Services.AddFluentValidationAutoValidation()
+        .AddFluentValidationClientsideAdapters()
+        .AddValidatorsFromAssemblyContaining<CreateCompanyRequestValidator>();
+
+// --- CORS Policy ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
 
+// --- Middleware ---
+app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service API v1");
-    options.RoutePrefix = string.Empty; // agar bisa diakses langsung di root
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Organization Service API v1");
+    options.RoutePrefix = string.Empty;
 });
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseExceptionHandling();
+app.UseRequestLogging();
+app.UseRequestTiming();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
