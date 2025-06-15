@@ -10,15 +10,6 @@
 - 🧩 Struktur monorepo: frontend, backend (.NET), automasi (n8n)
 - 🛡️ Dukungan JWT Auth, Swagger, dan modular microservices
 
-## Instalasi
-
-Pastikan Anda telah menginstal:
-
-- [Git](https://git-scm.com/)
-- [.NET 8 SDK](https://dotnet.microsoft.com/)
-- [Node.js](https://nodejs.org/)
-- [Docker](https://www.docker.com/)
-
 Clone repositori ini:
 
 ```bash
