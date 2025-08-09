@@ -32,7 +32,9 @@ namespace UserService.Data
             // Example: If you use composite keys or custom relationships, define them here
 
             // Optional: Global filters (e.g., soft delete)
-            modelBuilder.Entity<Company>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<UserProfile>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<UserPreference>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<UserActivityLog>().HasQueryFilter(e => !e.IsDeleted);
         }
 
         public override int SaveChanges()

@@ -21,8 +21,6 @@ namespace UserService.Models
         [MaxLength(50)]
         public string? Timezone { get; set; }
 
-        public bool ReceiveEmail { get; set; } = true;
-
-        public bool ReceiveInApp { get; set; } = true;
+        public bool ReceiveNotifications { get; set; } = true;
     }
 }

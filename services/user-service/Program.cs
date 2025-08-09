@@ -6,7 +6,6 @@ using Microsoft.IdentityModel.Tokens;
 using UserService.Data;
 using UserService.Services.Implementations;
 using UserService.Services.Interfaces;
-using UserService.Validation.Company;
 using SharedLibrary.Middlewares;
 using SharedLibrary.Security.JWT;
 using SharedLibrary.Security.Password;
@@ -44,7 +43,10 @@ builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // --- Internal Services ---
-builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+builder.Services.AddScoped<IUserPreferenceService, UserPreferenceService>();
+builder.Services.AddScoped<IUserActivityLogService, UserActivityLogService>();
+// --- Password Hasher ---
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 
 // --- JWT Authentication ---
@@ -72,7 +74,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // --- FluentValidation ---
 builder.Services.AddFluentValidationAutoValidation()
         .AddFluentValidationClientsideAdapters()
-        .AddValidatorsFromAssemblyContaining<CreateCompanyRequestValidator>();
+        .AddValidatorsFromAssemblyContaining<Program>();
+        
 
 // --- CORS Policy ---
 builder.Services.AddCors(options =>

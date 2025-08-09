@@ -14,7 +14,7 @@ namespace UserService.Models
 
         [Required]
         [MaxLength(100)]
-        public string Action { get; set; } // "Login", "UpdateProfile", etc.
+        public required string Activity { get; set; } // "Login", "UpdateProfile", etc.
 
         [MaxLength(500)]
         public string? Description { get; set; }

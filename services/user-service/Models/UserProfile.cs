@@ -11,7 +11,7 @@ namespace UserService.Models
 
         [Required]
         [MaxLength(100)]
-        public string FullName { get; set; }
+        public required string FullName { get; set; }
 
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
