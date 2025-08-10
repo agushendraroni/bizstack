@@ -8,6 +8,9 @@ public class Division
     public Guid Id { get; set; }
     public string Name { get; set; } = null!;
 
+    public Guid CompanyId { get; set; }
+    public Company Company { get; set; } = null!;
+
     public Guid BranchId { get; set; }
     public Branch Branch { get; set; } = null!;
 

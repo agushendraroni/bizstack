@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models; // Add this line for OpenApiInfo
 using UserService.Data;
 using UserService.Services.Implementations;
 using UserService.Services.Interfaces;
@@ -16,7 +17,10 @@ var builder = WebApplication.CreateBuilder(args);
 // --- Controllers & Swagger ---
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "User Service API v1", Version = "v1" });
+});
 
 // --- AutoMapper (opsional) ---
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -95,17 +99,19 @@ app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Organization Service API v1");
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service API v1");
     options.RoutePrefix = string.Empty;
 });
 
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
+
+// --- Custom Middleware ---
 app.UseExceptionHandling();
 app.UseRequestLogging();
 app.UseRequestTiming();
-
-app.MapControllers();
 
 await app.RunAsync();

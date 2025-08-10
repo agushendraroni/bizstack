@@ -1,5 +1,3 @@
-
-
 services:
   n8n:
     image: n8nio/n8n
@@ -23,8 +21,8 @@ services:
 
   auth-service:
     build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     container_name: BizStack-auth-service
     restart: always
     environment:
@@ -37,8 +35,8 @@ services:
 
   user-service:
     build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/user-service/Dockerfile
     container_name: BizStack-user-service
     restart: always
     environment:
@@ -74,6 +72,20 @@ services:
       - auth-service
       - user-service
       - graphql-mesh
+
+  organization-service:
+    build:
+      context: .
+      dockerfile: services/organization-service/Dockerfile
+    container_name: BizStack-organization-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=172.17.0.1;Port=5432;Database=organization_db;Username=org_user;Password=org_pass
+    ports:
+      - "5296:5296"
+    depends_on:
+      - n8n
 
 volumes:
   n8n_data:

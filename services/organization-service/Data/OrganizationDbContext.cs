@@ -20,6 +20,12 @@ namespace OrganizationService.Data
 
         // DbSets
         public DbSet<Company> Companies => Set<Company>();
+        public DbSet<Branch> Branches => Set<Branch>();
+        public DbSet<Division> Divisions => Set<Division>();
+        public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+        public DbSet<JobTitle> JobTitles => Set<JobTitle>();
+        public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
+        public DbSet<BusinessGroup> BusinessGroups => Set<BusinessGroup>();
 
         // Add more DbSets as needed, e.g.:
         // public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();

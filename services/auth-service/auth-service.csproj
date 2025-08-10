@@ -34,10 +34,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-   <ProjectReference Include="..\..\shared-library\shared-library.csproj" />
-
-
-    </ItemGroup>
-  
+    <ProjectReference Include="..\..\shared-library\shared-library.csproj" />
+  </ItemGroup>
 
 </Project>
