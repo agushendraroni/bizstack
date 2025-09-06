@@ -6,11 +6,19 @@ import { DefaultLayout } from "./layouts";
 
 // Import User Management
 import UserManagement from "./pages/users/UserManagement";
+import RoleManagement from "./pages/roles/RoleManagement";
+import PositionManagement from "./pages/organizations/PositionManagement";
+import DepartmentManagement from "./pages/organizations/DepartmentManagement";
+import UserProfile from "./pages/profile/UserProfile";
+import MenuTreeManagement from "./pages/settings/MenuTreeManagement";
+import CompanyManagement from "./pages/settings/CompanyManagement";
+import CompanySetup from "./pages/setup/CompanySetup";
 import BlogOverview from "./views/BlogOverview";
 import UserProfileLite from "./views/UserProfileLite";
 import AddNewPost from "./views/AddNewPost";
 import Errors from "./views/Errors";
 import ComponentsOverview from "./views/ComponentsOverview";
+import Login from "./views/Login";
 import Tables from "./views/Tables";
 import BlogPosts from "./views/BlogPosts";
 
@@ -312,6 +320,93 @@ export default [
     path: "/organizations",
     layout: DefaultLayout,
     component: SimpleOrganizationManagement
+  },
+  {
+    path: "/positions",
+    layout: DefaultLayout,
+    component: PositionManagement
+  },
+  {
+    path: "/departments",
+    layout: DefaultLayout,
+    component: DepartmentManagement
+  },
+  {
+    path: "/profile",
+    layout: DefaultLayout,
+    component: UserProfile
+  },
+  {
+    path: "/menu-tree",
+    layout: DefaultLayout,
+    component: MenuTreeManagement
+  },
+  {
+    path: "/company",
+    layout: DefaultLayout,
+    component: CompanyManagement
+  },
+  {
+    path: "/setup",
+    layout: DefaultLayout,
+    component: CompanySetup
+  },
+  
+  // Multi-tenant company routes
+  {
+    path: "/:companyCode/login",
+    layout: DefaultLayout,
+    component: Login
+  },
+  {
+    path: "/:companyCode/dashboard",
+    layout: DefaultLayout,
+    component: BlogOverview
+  },
+  {
+    path: "/:companyCode/users",
+    layout: DefaultLayout,
+    component: UserManagement
+  },
+  {
+    path: "/:companyCode/roles",
+    layout: DefaultLayout,
+    component: RoleManagement
+  },
+  {
+    path: "/:companyCode/organizations",
+    layout: DefaultLayout,
+    component: SimpleOrganizationManagement
+  },
+  {
+    path: "/:companyCode/positions",
+    layout: DefaultLayout,
+    component: PositionManagement
+  },
+  {
+    path: "/:companyCode/departments",
+    layout: DefaultLayout,
+    component: DepartmentManagement
+  },
+  {
+    path: "/:companyCode/profile",
+    layout: DefaultLayout,
+    component: UserProfile
+  },
+  {
+    path: "/:companyCode/company",
+    layout: DefaultLayout,
+    component: CompanyManagement
+  },
+  {
+    path: "/:companyCode/menu-tree",
+    layout: DefaultLayout,
+    component: MenuTreeManagement
+  },
+  {
+    path: "/roles",
+    layout: DefaultLayout,
+    component: RoleManagement
   },
   
   // Root redirect

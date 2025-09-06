@@ -1,0 +1,237 @@
+import React, { useState, useEffect } from "react";
+import { useParams, useHistory } from "react-router-dom";
+import { Container, Row, Col, Card, CardHeader, CardBody, Button, Form, FormInput, Alert } from "shards-react";
+
+const Login = () => {
+  const { companyCode } = useParams();
+  const history = useHistory();
+  
+  // State management
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [companyInfo, setCompanyInfo] = useState(null);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  });
+
+  // Load company info based on code
+  useEffect(() => {
+    if (companyCode) {
+      loadCompanyInfo(companyCode);
+    }
+  }, [companyCode]);
+
+  const loadCompanyInfo = async (code) => {
+    try {
+      // Normalize company code to uppercase for comparison
+      const normalizedCode = code.toUpperCase();
+      
+      // Mock company lookup - in real app, call API with case-insensitive search
+      if (normalizedCode === 'BLITZ') {
+        setCompanyInfo({
+          code: 'BLITZ', // Always store in uppercase
+          name: 'PT Blitz Technology Indonesia',
+          description: 'Leading business technology solutions provider',
+          logo: '/images/blitz-logo.png'
+        });
+      } else {
+        setError(`Company "${code}" not found`);
+      }
+    } catch (err) {
+      setError("Failed to load company information");
+    }
+  };
+
+  // Form handlers
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      // Mock authentication - in real app, call API
+      if (formData.username === 'admin' && formData.password === 'admin123') {
+        // Store user data with normalized company code
+        const userData = {
+          id: 'admin-blitz-001',
+          username: 'admin',
+          firstName: 'System',
+          lastName: 'Administrator',
+          email: 'admin@blitz.co.id',
+          companyCode: companyInfo.code, // Use normalized uppercase code
+          companyName: companyInfo.name
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('authToken', 'mock-jwt-token');
+        
+        // Redirect to company dashboard with normalized code
+        history.push(`/${companyInfo.code}/dashboard`);
+      } else {
+        setError("Invalid username or password");
+      }
+    } catch (err) {
+      setError("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-vh-100 d-flex align-items-center bg-light">
+      <Container>
+        <Row className="justify-content-center">
+          <Col lg="5" md="7">
+            <Card className="shadow">
+              <CardHeader className="bg-primary text-white text-center">
+                <div className="py-3">
+                  {companyInfo && (
+                    <>
+                      <h4 className="mb-1">{companyInfo.name}</h4>
+                      <p className="mb-0 opacity-75">{companyInfo.description}</p>
+                    </>
+                  )}
+                  {!companyInfo && companyCode && (
+                    <h4 className="mb-0">Company Login</h4>
+                  )}
+                </div>
+              </CardHeader>
+              <CardBody className="p-4">
+                {/* Company Code Display */}
+                {companyCode && (
+                  <div className="text-center mb-4">
+                    <div className="badge badge-primary badge-lg">
+                      <i className="fas fa-building mr-2"></i>
+                      {companyInfo ? companyInfo.code : companyCode.toUpperCase()}
+                    </div>
+                    <div className="text-muted mt-2">
+                      <small>
+                        Multi-tenant login for {companyInfo ? companyInfo.code : companyCode.toUpperCase()}
+                        {companyCode !== companyCode.toUpperCase() && (
+                          <div className="mt-1">
+                            <i className="fas fa-info-circle mr-1"></i>
+                            Entered: <code>{companyCode}</code> → Normalized: <code>{companyCode.toUpperCase()}</code>
+                          </div>
+                        )}
+                      </small>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Alert */}
+                {error && (
+                  <Alert theme="danger" className="mb-3">
+                    <i className="fas fa-exclamation-triangle mr-2"></i>
+                    {error}
+                  </Alert>
+                )}
+
+                {/* Login Form */}
+                {companyInfo && (
+                  <Form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                      <label htmlFor="username">Username</label>
+                      <FormInput
+                        id="username"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                        placeholder="Enter your username"
+                        autoComplete="username"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label htmlFor="password">Password</label>
+                      <FormInput
+                        id="password"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      theme="primary" 
+                      size="lg" 
+                      block
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin mr-2"></i>
+                          Signing in...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-sign-in-alt mr-2"></i>
+                          Sign In
+                        </>
+                      )}
+                    </Button>
+                  </Form>
+                )}
+
+                {/* Default Credentials Info */}
+                {companyInfo && (
+                  <div className="mt-4 p-3 bg-light rounded">
+                    <h6 className="mb-2">
+                      <i className="fas fa-info-circle mr-2"></i>
+                      Default Credentials
+                    </h6>
+                    <div className="row">
+                      <div className="col-6">
+                        <small className="text-muted">Username:</small>
+                        <div><code>admin</code></div>
+                      </div>
+                      <div className="col-6">
+                        <small className="text-muted">Password:</small>
+                        <div><code>admin123</code></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Company Not Found */}
+                {!companyInfo && companyCode && !error && (
+                  <div className="text-center py-4">
+                    <i className="fas fa-search fa-2x text-muted mb-3"></i>
+                    <h5>Loading company information...</h5>
+                    <p className="text-muted">Please wait while we verify the company code.</p>
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Footer */}
+            <div className="text-center mt-4">
+              <small className="text-muted">
+                <i className="fas fa-shield-alt mr-1"></i>
+                Secure multi-tenant login powered by BizStack
+              </small>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
+};
+
+export default Login;

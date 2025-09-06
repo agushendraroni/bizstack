@@ -7,15 +7,58 @@ export default function() {
       htmlBefore: '<i class="fas fa-tachometer-alt"></i>',
       htmlAfter: ""
     },
+    
+    // === ORGANIZATION (EXPANDABLE) ===
     {
-      title: "User Management",
-      htmlBefore: '<i class="fas fa-users"></i>',
-      to: "/users",
-    },
-    {
-      title: "Organizations",
+      title: "Organization",
       htmlBefore: '<i class="fas fa-building"></i>',
-      to: "/organizations",
+      to: "#",
+      items: [
+        {
+          title: "User Management",
+          htmlBefore: '<i class="fas fa-users"></i>',
+          to: "/users",
+        },
+        {
+          title: "Role Management",
+          htmlBefore: '<i class="fas fa-shield-alt"></i>',
+          to: "/roles",
+        },
+        {
+          title: "Companies",
+          htmlBefore: '<i class="fas fa-building"></i>',
+          to: "/organizations",
+        },
+        {
+          title: "Departments",
+          htmlBefore: '<i class="fas fa-sitemap"></i>',
+          to: "/departments",
+        },
+        {
+          title: "Positions",
+          htmlBefore: '<i class="fas fa-user-tie"></i>',
+          to: "/positions",
+        }
+      ]
+    },
+    
+    // === SYSTEM SETTINGS (EXPANDABLE) ===
+    {
+      title: "System Settings",
+      htmlBefore: '<i class="fas fa-cogs"></i>',
+      to: "#",
+      items: [
+        {
+          title: "Company Info",
+          htmlBefore: '<i class="fas fa-building"></i>',
+          to: "/company",
+        },
+        {
+          title: "Menu Tree",
+          htmlBefore: '<i class="fas fa-sitemap"></i>',
+          to: "/menu-tree",
+        }
+      ]
     },
     
     // === DIVIDER ===

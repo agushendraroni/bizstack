@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, CardHeader, CardBody, Button, Badge, Modal, ModalBody, ModalHeader, Form, FormInput, Alert } from "shards-react";
+import { Container, Row, Col, Card, CardHeader, CardBody, Button, Badge, Form, FormInput, Alert } from "shards-react";
 import PageTitle from "../../components/common/PageTitle";
 import Pagination from "../../components/common/Pagination";
 import userAPI from "../../api/user/userApi";
+import roleAPI from "../../api/auth/roleApi";
 
 const UserManagement = () => {
   // State management
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   
-  // Modal states
-  const [showModal, setShowModal] = useState(false);
+  // View states
+  const [currentView, setCurrentView] = useState('list'); // 'list', 'add', 'edit'
   const [editingUser, setEditingUser] = useState(null);
-  const [modalLoading, setModalLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,15 +37,21 @@ const UserManagement = () => {
     firstName: "",
     lastName: "",
     phoneNumber: "",
-    position: "",
-    department: "",
+    positionId: "",
+    departmentId: "",
+    roleId: "",
     isActive: true
   });
 
   // Load users
   useEffect(() => {
-    loadUsers();
-  }, [currentPage, itemsPerPage, searchQuery]);
+    if (currentView === 'list') {
+      loadUsers();
+    }
+    loadRoles();
+    loadPositions();
+    loadDepartments();
+  }, [currentPage, itemsPerPage, searchQuery, currentView]);
 
   const loadUsers = async () => {
     try {
@@ -62,6 +72,50 @@ const UserManagement = () => {
       setUsers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRoles = async () => {
+    try {
+      const result = await roleAPI.getRoles();
+      if (result.success) {
+        setRoles(result.data);
+      }
+    } catch (err) {
+      console.error('Failed to load roles:', err);
+    }
+  };
+
+  const loadPositions = async () => {
+    try {
+      // Mock positions data
+      const mockPositions = [
+        { id: 1, name: "CEO" },
+        { id: 2, name: "CTO" },
+        { id: 3, name: "Manager" },
+        { id: 4, name: "Senior Developer" },
+        { id: 5, name: "Developer" },
+        { id: 6, name: "Junior Developer" }
+      ];
+      setPositions(mockPositions);
+    } catch (err) {
+      console.error('Failed to load positions:', err);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      // Mock departments data
+      const mockDepartments = [
+        { id: 1, name: "Information Technology", code: "IT" },
+        { id: 2, name: "Human Resources", code: "HR" },
+        { id: 3, name: "Finance", code: "FIN" },
+        { id: 4, name: "Sales", code: "SALES" },
+        { id: 5, name: "Marketing", code: "MKT" }
+      ];
+      setDepartments(mockDepartments);
+    } catch (err) {
+      console.error('Failed to load departments:', err);
     }
   };
 
@@ -89,7 +143,7 @@ const UserManagement = () => {
     setCurrentPage(1); // Reset to first page
   };
 
-  // Modal handlers
+  // View handlers
   const handleAddUser = () => {
     setEditingUser(null);
     setFormData({
@@ -98,11 +152,12 @@ const UserManagement = () => {
       firstName: "",
       lastName: "",
       phoneNumber: "",
-      position: "",
-      department: "",
+      positionId: "",
+      departmentId: "",
+      roleId: "",
       isActive: true
     });
-    setShowModal(true);
+    setCurrentView('add');
   };
 
   const handleEditUser = (user) => {
@@ -113,17 +168,19 @@ const UserManagement = () => {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       phoneNumber: user.phoneNumber || "",
-      position: user.position || "",
-      department: user.department || "",
+      positionId: user.positionId || "",
+      departmentId: user.departmentId || "",
+      roleId: user.roleId || "",
       isActive: user.isActive !== false
     });
-    setShowModal(true);
+    setCurrentView('edit');
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCancel = () => {
+    setCurrentView('list');
     setEditingUser(null);
-    setModalLoading(false);
+    setError("");
+    setSuccess("");
   };
 
   // Form handlers
@@ -139,7 +196,7 @@ const UserManagement = () => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    setModalLoading(true);
+    setFormLoading(true);
 
     try {
       let result;
@@ -151,15 +208,17 @@ const UserManagement = () => {
 
       if (result.success) {
         setSuccess(result.message);
-        setShowModal(false);
-        loadUsers(); // Reload current page
+        setTimeout(() => {
+          setCurrentView('list');
+          setSuccess("");
+        }, 2000);
       } else {
         setError(result.message);
       }
     } catch (err) {
       setError("An error occurred while saving user");
     } finally {
-      setModalLoading(false);
+      setFormLoading(false);
     }
   };
 
@@ -197,8 +256,9 @@ const UserManagement = () => {
     }
   }, [error, success]);
 
-  return (
-    <Container fluid className="main-content-container px-4">
+  // Render List View
+  const renderListView = () => (
+    <>
       {/* Page Header */}
       <Row noGutters className="page-header py-4">
         <PageTitle 
@@ -207,29 +267,6 @@ const UserManagement = () => {
           className="text-sm-left mb-3" 
         />
       </Row>
-
-      {/* Alerts */}
-      {error && (
-        <Row>
-          <Col>
-            <Alert theme="danger" className="mb-3">
-              <i className="fas fa-exclamation-triangle mr-2"></i>
-              {error}
-            </Alert>
-          </Col>
-        </Row>
-      )}
-
-      {success && (
-        <Row>
-          <Col>
-            <Alert theme="success" className="mb-3">
-              <i className="fas fa-check-circle mr-2"></i>
-              {success}
-            </Alert>
-          </Col>
-        </Row>
-      )}
 
       {/* Search and Actions */}
       <Row className="mb-4">
@@ -358,152 +395,270 @@ const UserManagement = () => {
           </Card>
         </Col>
       </Row>
+    </>
+  );
 
-      {/* Add/Edit User Modal */}
-      <Modal open={showModal} toggle={handleCloseModal} size="lg">
-        <ModalHeader>
-          <i className={`fas ${editingUser ? 'fa-edit' : 'fa-plus'} mr-2`}></i>
-          {editingUser ? "Edit User" : "Add New User"}
-        </ModalHeader>
-        <ModalBody>
-          <Form onSubmit={handleSubmit}>
-            <Row>
-              <Col md="6">
-                <div className="mb-3">
-                  <label htmlFor="firstName">First Name *</label>
-                  <FormInput
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </Col>
-              <Col md="6">
-                <div className="mb-3">
-                  <label htmlFor="lastName">Last Name *</label>
-                  <FormInput
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md="6">
-                <div className="mb-3">
-                  <label htmlFor="username">Username *</label>
-                  <FormInput
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </Col>
-              <Col md="6">
-                <div className="mb-3">
-                  <label htmlFor="email">Email *</label>
-                  <FormInput
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md="6">
-                <div className="mb-3">
-                  <label htmlFor="position">Position</label>
-                  <FormInput
-                    id="position"
-                    name="position"
-                    value={formData.position}
-                    onChange={handleChange}
-                  />
-                </div>
-              </Col>
-              <Col md="6">
-                <div className="mb-3">
-                  <label htmlFor="department">Department</label>
-                  <FormInput
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={handleChange}
-                  />
-                </div>
-              </Col>
-            </Row>
-
-            <div className="mb-3">
-              <label htmlFor="phoneNumber">Phone Number</label>
-              <FormInput
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-              />
+  // Render Form View
+  const renderFormView = () => (
+    <>
+      {/* Page Header */}
+      <Row noGutters className="page-header py-4">
+        <Col>
+          <div className="d-flex align-items-center">
+            <Button 
+              theme="light" 
+              size="sm" 
+              className="mr-3"
+              onClick={handleCancel}
+            >
+              <i className="fas fa-arrow-left mr-2"></i>
+              Back to List
+            </Button>
+            <div>
+              <span className="text-uppercase page-subtitle">User Management</span>
+              <h3 className="page-title mb-0">
+                <i className={`fas ${editingUser ? 'fa-edit' : 'fa-plus'} mr-2`}></i>
+                {editingUser ? "Edit User" : "Add New User"}
+              </h3>
             </div>
+          </div>
+        </Col>
+      </Row>
 
-            <div className="mb-3">
-              <div className="custom-control custom-checkbox">
-                <input
-                  type="checkbox"
-                  className="custom-control-input"
-                  id="isActive"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleChange}
-                />
-                <label className="custom-control-label" htmlFor="isActive">
-                  Active User
-                </label>
-              </div>
-            </div>
+      {/* Form */}
+      <Row>
+        <Col lg="8">
+          <Card small className="mb-4">
+            <CardHeader className="border-bottom">
+              <h6 className="m-0">User Information</h6>
+            </CardHeader>
+            <CardBody>
+              <Form onSubmit={handleSubmit}>
+                <Row>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="firstName">First Name *</label>
+                      <FormInput
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </Col>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="lastName">Last Name *</label>
+                      <FormInput
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </Col>
+                </Row>
 
-            <div className="d-flex justify-content-end">
-              <Button 
-                type="button" 
-                theme="secondary" 
-                className="mr-2"
-                onClick={handleCloseModal}
-                disabled={modalLoading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                theme="primary"
-                disabled={modalLoading}
-              >
-                {modalLoading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    {editingUser ? "Updating..." : "Creating..."}
-                  </>
-                ) : (
-                  <>
-                    <i className={`fas ${editingUser ? 'fa-save' : 'fa-plus'} mr-2`}></i>
-                    {editingUser ? "Update User" : "Create User"}
-                  </>
-                )}
-              </Button>
-            </div>
-          </Form>
-        </ModalBody>
-      </Modal>
+                <Row>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="username">Username *</label>
+                      <FormInput
+                        id="username"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </Col>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="email">Email *</label>
+                      <FormInput
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="positionId">Position</label>
+                      <select
+                        className="form-control"
+                        id="positionId"
+                        name="positionId"
+                        value={formData.positionId}
+                        onChange={handleChange}
+                      >
+                        <option value="">Select Position</option>
+                        {positions.map(position => (
+                          <option key={position.id} value={position.id}>
+                            {position.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </Col>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="departmentId">Department</label>
+                      <select
+                        className="form-control"
+                        id="departmentId"
+                        name="departmentId"
+                        value={formData.departmentId}
+                        onChange={handleChange}
+                      >
+                        <option value="">Select Department</option>
+                        {departments.map(department => (
+                          <option key={department.id} value={department.id}>
+                            {department.name} ({department.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="roleId">Role</label>
+                      <select
+                        className="form-control"
+                        id="roleId"
+                        name="roleId"
+                        value={formData.roleId}
+                        onChange={handleChange}
+                      >
+                        <option value="">Select Role</option>
+                        {roles.map(role => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </Col>
+                  <Col md="6">
+                    <div className="mb-3">
+                      <label htmlFor="phoneNumber">Phone Number</label>
+                      <FormInput
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </Col>
+                </Row>
+
+                <div className="mb-4">
+                  <div className="custom-control custom-checkbox">
+                    <input
+                      type="checkbox"
+                      className="custom-control-input"
+                      id="isActive"
+                      name="isActive"
+                      checked={formData.isActive}
+                      onChange={handleChange}
+                    />
+                    <label className="custom-control-label" htmlFor="isActive">
+                      Active User
+                    </label>
+                  </div>
+                </div>
+
+                <div className="d-flex">
+                  <Button 
+                    type="button" 
+                    theme="secondary" 
+                    className="mr-2"
+                    onClick={handleCancel}
+                    disabled={formLoading}
+                  >
+                    <i className="fas fa-times mr-2"></i>
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    theme="primary"
+                    disabled={formLoading}
+                  >
+                    {formLoading ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin mr-2"></i>
+                        {editingUser ? "Updating..." : "Creating..."}
+                      </>
+                    ) : (
+                      <>
+                        <i className={`fas ${editingUser ? 'fa-save' : 'fa-plus'} mr-2`}></i>
+                        {editingUser ? "Update User" : "Create User"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Form>
+            </CardBody>
+          </Card>
+        </Col>
+        
+        <Col lg="4">
+          <Card small className="mb-4">
+            <CardHeader className="border-bottom">
+              <h6 className="m-0">User Roles</h6>
+            </CardHeader>
+            <CardBody>
+              {roles.map(role => (
+                <div key={role.id} className="mb-2">
+                  <Badge theme="primary" className="mr-2">{role.name}</Badge>
+                  <small>{role.description}</small>
+                </div>
+              ))}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+    </>
+  );
+
+  return (
+    <Container fluid className="main-content-container px-4">
+      {/* Alerts */}
+      {error && (
+        <Row>
+          <Col>
+            <Alert theme="danger" className="mb-3">
+              <i className="fas fa-exclamation-triangle mr-2"></i>
+              {error}
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
+      {success && (
+        <Row>
+          <Col>
+            <Alert theme="success" className="mb-3">
+              <i className="fas fa-check-circle mr-2"></i>
+              {success}
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
+      {/* Render based on current view */}
+      {currentView === 'list' ? renderListView() : renderFormView()}
     </Container>
   );
 };

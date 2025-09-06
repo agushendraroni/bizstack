@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizStack Services Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .service-card { transition: all 0.3s ease; }
+        .service-card:hover { transform: translateY(-2px); }
+        .status-online { border-left: 4px solid #28a745; }
+        .status-offline { border-left: 4px solid #dc3545; }
+        .status-warning { border-left: 4px solid #ffc107; }
+        .refresh-btn { position: fixed; bottom: 20px; right: 20px; }
+        .last-updated { font-size: 0.8rem; color: #6c757d; }
+        .response-time { font-size: 0.9rem; }
+        .uptime-badge { font-size: 0.8rem; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-server me-2"></i>BizStack Services Monitor
+            </span>
+            <div class="d-flex align-items-center text-white">
+                <span id="lastUpdated" class="last-updated me-3"></span>
+                <button class="btn btn-outline-light btn-sm" onclick="refreshAll()">
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="onlineCount">0</h4>
+                                <p class="mb-0">Services Online</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="offlineCount">0</h4>
+                                <p class="mb-0">Services Offline</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-times-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="totalServices">13</h4>
+                                <p class="mb-0">Total Services</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-server fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 id="avgResponseTime">0ms</h4>
+                                <p class="mb-0">Avg Response Time</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="row" id="servicesGrid">
+            <!-- Services will be loaded here -->
+        </div>
+    </div>
+
+    <button class="btn btn-primary refresh-btn" onclick="refreshAll()">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const services = [
+            { name: 'Auth Service', port: 5001, endpoint: '/health', description: 'Authentication & Authorization' },
+            { name: 'User Service', port: 5002, endpoint: '/health', description: 'User Management' },
+            { name: 'Organization Service', port: 5003, endpoint: '/health', description: 'Company & Organization' },
+            { name: 'Product Service', port: 5004, endpoint: '/health', description: 'Product & Inventory' },
+            { name: 'Customer Service', port: 5005, endpoint: '/health', description: 'Customer Management' },
+            { name: 'Transaction Service', port: 5006, endpoint: '/health', description: 'Sales & Transactions' },
+            { name: 'Report Service', port: 5007, endpoint: '/health', description: 'Business Analytics' },
+            { name: 'Notification Service', port: 5008, endpoint: '/health', description: 'Notifications' },
+            { name: 'File Storage Service', port: 5009, endpoint: '/health', description: 'File Management' },
+            { name: 'Settings Service', port: 5010, endpoint: '/health', description: 'System Settings' },
+            { name: 'React Frontend', port: 3000, endpoint: '/', description: 'Admin Dashboard UI' },
+            { name: 'GraphQL Mesh', port: 4000, endpoint: '/', description: 'API Gateway' },
+            { name: 'n8n Workflows', port: 5678, endpoint: '/', description: 'Workflow Automation' }
+        ];
+
+        let serviceStatus = {};
+
+        async function checkService(service) {
+            const startTime = Date.now();
+            try {
+                const response = await fetch(`http://localhost:${service.port}${service.endpoint}`, {
+                    method: 'GET',
+                    mode: 'no-cors',
+                    timeout: 5000
+                });
+                
+                const responseTime = Date.now() - startTime;
+                return {
+                    ...service,
+                    status: 'online',
+                    responseTime: responseTime,
+                    lastChecked: new Date(),
+                    error: null
+                };
+            } catch (error) {
+                const responseTime = Date.now() - startTime;
+                return {
+                    ...service,
+                    status: 'offline',
+                    responseTime: responseTime,
+                    lastChecked: new Date(),
+                    error: error.message
+                };
+            }
+        }
+
+        function createServiceCard(service) {
+            const statusClass = service.status === 'online' ? 'status-online' : 'status-offline';
+            const statusIcon = service.status === 'online' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
+            const statusBadge = service.status === 'online' ? 'bg-success' : 'bg-danger';
+
+            return `
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <div class="card service-card ${statusClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">${service.name}</h6>
+                                <i class="fas ${statusIcon} fa-lg"></i>
+                            </div>
+                            <p class="card-text text-muted small mb-2">${service.description}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge ${statusBadge}">${service.status.toUpperCase()}</span>
+                                <small class="text-muted">:${service.port}</small>
+                            </div>
+                            <div class="mt-2">
+                                <small class="response-time">
+                                    <i class="fas fa-clock"></i> ${service.responseTime}ms
+                                </small>
+                                <br>
+                                <small class="text-muted">
+                                    Last: ${service.lastChecked.toLocaleTimeString()}
+                                </small>
+                            </div>
+                            ${service.error ? `<div class="mt-2"><small class="text-danger">${service.error}</small></div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateSummary() {
+            const online = Object.values(serviceStatus).filter(s => s.status === 'online').length;
+            const offline = Object.values(serviceStatus).filter(s => s.status === 'offline').length;
+            const avgResponseTime = Object.values(serviceStatus).reduce((sum, s) => sum + s.responseTime, 0) / services.length;
+
+            document.getElementById('onlineCount').textContent = online;
+            document.getElementById('offlineCount').textContent = offline;
+            document.getElementById('totalServices').textContent = services.length;
+            document.getElementById('avgResponseTime').textContent = Math.round(avgResponseTime) + 'ms';
+        }
+
+        function renderServices() {
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = Object.values(serviceStatus)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(createServiceCard)
+                .join('');
+        }
+
+        async function refreshAll() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+
+            const promises = services.map(checkService);
+            const results = await Promise.all(promises);
+
+            results.forEach(result => {
+                serviceStatus[result.name] = result;
+            });
+
+            renderServices();
+            updateSummary();
+
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${new Date().toLocaleTimeString()}`;
+
+            refreshIcon.classList.remove('fa-spin');
+        }
+
+        // Auto refresh every 30 seconds
+        setInterval(refreshAll, 30000);
+
+        // Initial load
+        refreshAll();
+    </script>
+</body>
+</html>

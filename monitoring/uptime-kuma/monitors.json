@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Auth Service",
+    "type": "http",
+    "url": "http://localhost:5001/swagger",
+    "interval": 60
+  },
+  {
+    "name": "User Service", 
+    "type": "http",
+    "url": "http://localhost:5002/swagger",
+    "interval": 60
+  },
+  {
+    "name": "Organization Service",
+    "type": "http", 
+    "url": "http://localhost:5003/swagger",
+    "interval": 60
+  },
+  {
+    "name": "Product Service",
+    "type": "http",
+    "url": "http://localhost:5004/swagger", 
+    "interval": 60
+  },
+  {
+    "name": "Customer Service",
+    "type": "http",
+    "url": "http://localhost:5005/swagger",
+    "interval": 60
+  },
+  {
+    "name": "Transaction Service",
+    "type": "http",
+    "url": "http://localhost:5006/swagger",
+    "interval": 60
+  },
+  {
+    "name": "Report Service",
+    "type": "http",
+    "url": "http://localhost:5007/swagger",
+    "interval": 60
+  },
+  {
+    "name": "Notification Service",
+    "type": "http",
+    "url": "http://localhost:5008/swagger",
+    "interval": 60
+  },
+  {
+    "name": "File Storage Service",
+    "type": "http",
+    "url": "http://localhost:5009/swagger",
+    "interval": 60
+  },
+  {
+    "name": "Settings Service",
+    "type": "http",
+    "url": "http://localhost:5010/swagger",
+    "interval": 60
+  },
+  {
+    "name": "GraphQL API",
+    "type": "http",
+    "url": "http://localhost:4000/graphql",
+    "interval": 60
+  },
+  {
+    "name": "n8n Workflows",
+    "type": "http", 
+    "url": "http://localhost:5678",
+    "interval": 60
+  }
+]

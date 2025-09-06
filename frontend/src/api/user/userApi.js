@@ -22,8 +22,8 @@ class UserAPI {
         pagination: {
           currentPage: page,
           pageSize: pageSize,
-          totalItems: response.totalCount || response.data?.length || 0,
-          totalPages: Math.ceil((response.totalCount || response.data?.length || 0) / pageSize)
+          totalItems: response.totalCount || (response.data && response.data.length) || 0,
+          totalPages: Math.ceil((response.totalCount || (response.data && response.data.length) || 0) / pageSize)
         },
         message: response.message
       };

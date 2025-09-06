@@ -1,307 +1,175 @@
-# BizStack .gitignore
+# BizStack .gitignore - Complete Project
 
-# Build outputs
-**/bin/
-**/obj/
-**/out/
-**/dist/
-**/build/
-
-# Dependencies
+# ========================================
+# DEPENDENCIES - NEVER COMMIT!
+# ========================================
+node_modules/
 **/node_modules/
-**/packages/
-**/.pnp
-**/.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+package-lock.json
 
-# Environment files
-**/.env
-**/.env.local
-**/.env.development.local
-**/.env.test.local
-**/.env.production.local
+# ========================================
+# .NET BUILD OUTPUTS
+# ========================================
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# Database
-**/*.db
-**/*.sqlite
-**/*.sqlite3
+# ========================================
+# FRONTEND BUILD
+# ========================================
+frontend/build/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
-# Logs
-**/logs/
-**/*.log
-**/npm-debug.log*
-**/yarn-debug.log*
-**/yarn-error.log*
+# ========================================
+# ENVIRONMENT & CONFIG
+# ========================================
+.env
+.env.local
+.env.*.local
+appsettings.Development.json
+appsettings.Production.json
+connectionstrings.json
 
-# Runtime data
-**/pids/
-**/*.pid
-**/*.seed
-**/*.pid.lock
+# ========================================
+# DATABASE
+# ========================================
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
 
-# Coverage directory used by tools like istanbul
-**/coverage/
-**/.nyc_output
+# ========================================
+# DOCKER & CONTAINERS
+# ========================================
+.dockerignore
+docker-compose.override.yml
 
-# IDE files
-**/.vscode/
-**/.idea/
-**/*.swp
-**/*.swo
-**/*~
+# ========================================
+# GRAPHQL MESH
+# ========================================
+services/graphql-mesh/.mesh/
+services/graphql-mesh/node_modules/
+services/graphql-mesh/.env
 
-# OS generated files
-**/.DS_Store
-**/.DS_Store?
-**/._*
-**/.Spotlight-V100
-**/.Trashes
-**/ehthumbs.db
-**/Thumbs.db
+# ========================================
+# N8N DATA
+# ========================================
+n8n_data/
+n8n-data/
 
-# Docker
-**/.dockerignore
+# ========================================
+# MONITORING DATA
+# ========================================
+monitoring/uptime-kuma/data/
+monitoring/prometheus/data/
+monitoring/grafana/data/
 
-# .NET specific
-**/[Bb]in/
-**/[Oo]bj/
-**/[Ll]og/
-**/[Ll]ogs/
-**/*.user
-**/*.userosscache
-**/*.sln.docstates
-**/*.userprefs
-**/mono_crash.*
-**/[Dd]ebug/
-**/[Dd]ebugPublic/
-**/[Rr]elease/
-**/[Rr]eleases/
-**/x64/
-**/x86/
-**/[Ww][Ii][Nn]32/
-**/[Aa][Rr][Mm]/
-**/[Aa][Rr][Mm]64/
-**/bld/
-**/[Bb]in/
-**/[Oo]bj/
-**/[Ll]og/
-**/[Ll]ogs/
+# ========================================
+# LOGS
+# ========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend.log
 
-# Visual Studio files
-**/.vs/
-**/Generated\ Files/
-**/*.aps
-**/*.ncb
-**/*.opendb
-**/*.opensdf
-**/*.sdf
-**/*.cachefile
-**/*.VC.db
-**/*.VC.VC.opendb
+# ========================================
+# IDE & EDITOR
+# ========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vs/
 
-# MSTest test Results
-**/[Tt]est[Rr]esult*/
-**/[Bb]uild[Ll]og.*
+# ========================================
+# OS FILES
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# NUnit
-**/*.VisualState.xml
-**/TestResult.xml
-**/nunit-*.xml
+# ========================================
+# TEMPORARY FILES
+# ========================================
+tmp/
+temp/
+*.tmp
+*.temp
 
-# Build Results of an ATL Project
-**/[Dd]ebugPS/
-**/[Rr]eleasePS/
-**/dlldata.c
+# ========================================
+# CERTIFICATES & KEYS
+# ========================================
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+*.cer
 
-# Benchmark Results
-**/BenchmarkDotNet.Artifacts/
+# ========================================
+# BACKUP FILES
+# ========================================
+*.bak
+*.backup
+*.old
 
-# .NET Core
-**/project.lock.json
-**/project.fragment.lock.json
-**/artifacts/
+# ========================================
+# COVERAGE & TEST RESULTS
+# ========================================
+coverage/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
 
-# ASP.NET Scaffolding
-**/ScaffoldingReadMe.txt
+# ========================================
+# NUGET PACKAGES
+# ========================================
+*.nupkg
+*.snupkg
+packages/
+.nuget/
 
-# StyleCop
-**/StyleCopReport.xml
+# ========================================
+# VISUAL STUDIO
+# ========================================
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+*.VC.db
+*.VC.VC.opendb
 
-# Files built by Visual Studio
-**/*_i.c
-**/*_p.c
-**/*_h.h
-**/*.ilk
-**/*.meta
-**/*.obj
-**/*.iobj
-**/*.pch
-**/*.pdb
-**/*.ipdb
-**/*.pgc
-**/*.pgd
-**/*.rsp
-**/*.sbr
-**/*.tlb
-**/*.tli
-**/*.tlh
-**/*.tmp
-**/*.tmp_proj
-**/*_wpftmp.csproj
-**/*.vspscc
-**/*.vssscc
-**/.builds
-**/*.pidb
-**/*.svclog
-**/*.scc
-
-# Chutzpah Test files
-**/_Chutzpah*
-
-# Visual C++ cache files
-**/ipch/
-**/*.aps
-**/*.ncb
-**/*.opendb
-**/*.opensdf
-**/*.sdf
-**/*.cachefile
-**/*.VC.db
-**/*.VC.VC.opendb
-
-# Visual Studio profiler
-**/*.psess
-**/*.vsp
-**/*.vspx
-**/*.sap
-
-# Visual Studio Trace Files
-**/*.e2e
-
-# TFS 2012 Local Workspace
-**/$tf/
-
-# Guidance Automation Toolkit
-**/*.gpState
-
-# ReSharper is a .NET coding add-in
-**/_ReSharper*/
-**/*.[Rr]e[Ss]harper
-**/*.DotSettings.user
-
-# TeamCity is a build add-in
-**/_TeamCity*
-
-# DotCover is a Code Coverage Tool
-**/*.dotCover
-
-# AxoCover is a Code Coverage Tool
-**/.axoCover/*
-**/!.axoCover/settings.json
-
-# Coverlet is a free, cross platform Code Coverage Tool
-**/coverage*.json
-**/coverage*.xml
-**/coverage*.info
-
-# Visual Studio code coverage results
-**/*.coverage
-**/*.coveragexml
-
-# NCrunch
-**/_NCrunch_*
-**/.crunch*.local.xml
-**/nCrunchTemp_*
-
-# MightyMoose
-**/*.mm.*
-**/AutoTest.Net/
-
-# Web workbench (sass)
-**/.sass-cache/
-
-# Installshield output folder
-**/[Ee]xpress/
-
-# DocProject is a documentation generator add-in
-**/DocProject/buildhelp/
-**/DocProject/Help/*.HxT
-**/DocProject/Help/*.HxC
-**/DocProject/Help/Html2
-**/DocProject/Help/html
-
-# Click-Once directory
-**/publish/
-
-# Publish Web Output
-**/*.[Pp]ublish.xml
-**/*.azurePubxml
-**/*.pubxml
-**/*.publishproj
-
-# Microsoft Azure Web App publish settings. Comment the next line if you want to
-# checkin your Azure Web App publish settings, but sensitive information contained
-# in these files may be echoed to the publicly available build logs.
-**/*.PublishSettings
-
-# NuGet Packages
-**/*.nupkg
-**/*.snupkg
-**/packages/
-**/.nuget/packages/
-**/.nuget/
-
-# Microsoft Azure Build Output
-**/csx/
-**/*.build.csdef
-
-# Microsoft Azure Emulator
-**/ecf/
-**/rcf/
-
-# Windows Store app package directories and files
-**/AppPackages/
-**/BundleArtifacts/
-**/Package.StoreAssociation.xml
-**/_pkginfo.txt
-**/*.appx
-**/*.appxbundle
-**/*.appxupload
-
-# Visual Studio cache files
-**/*.suo
-**/*.user
-**/*.userosscache
-**/*.sln.docstates
-
-# User-specific files (MonoDevelop/Xamarin Studio)
-**/*.userprefs
-
-# Mono auto generated files
-**/mono_crash.*
-
-# Build results
-**/[Dd]ebug/
-**/[Dd]ebugPublic/
-**/[Rr]elease/
-**/[Rr]eleases/
-**/x64/
-**/x86/
-**/[Ww][Ii][Nn]32/
-**/[Aa][Rr][Mm]/
-**/[Aa][Rr][Mm]64/
-**/bld/
-**/[Bb]in/
-**/[Oo]bj/
-**/[Ll]og/
-**/[Ll]ogs/
-
-# GraphQL Mesh generated files
-**/.mesh/
-**/node_modules/
-
-# n8n data
-**/n8n_data/
-
-# Temporary files
-**/tmp/
-**/temp/
+# ========================================
+# RESHARPER
+# ========================================
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user

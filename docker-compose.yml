@@ -131,6 +131,20 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  settings-service:
+    build:
+      context: .
+      dockerfile: services/settings-service/Dockerfile
+    container_name: BizStack-settings-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=settings_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5010:5010"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   # Automation & Integration
   n8n:
     image: n8nio/n8n
