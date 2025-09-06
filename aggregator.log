@@ -1,0 +1,19 @@
+/mnt/data/Development/LOJIPHIN/BizStack/node_modules/path-to-regexp/dist/index.js:96
+            throw new PathError(`Missing parameter name at index ${index}`, str);
+            ^
+
+PathError [TypeError]: Missing parameter name at index 11: /api/auth/*; visit https://git.new/pathToRegexpError for info
+    at name (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/path-to-regexp/dist/index.js:96:19)
+    at parse (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/path-to-regexp/dist/index.js:113:68)
+    at pathToRegexp (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/path-to-regexp/dist/index.js:267:58)
+    at Object.match (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/path-to-regexp/dist/index.js:237:30)
+    at matcher (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/router/lib/layer.js:86:23)
+    at new Layer (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/router/lib/layer.js:93:62)
+    at Function.route (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/router/index.js:428:17)
+    at Function.route (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/express/lib/application.js:257:22)
+    at Function.all (/mnt/data/Development/LOJIPHIN/BizStack/node_modules/express/lib/application.js:495:20)
+    at Object.<anonymous> (/mnt/data/Development/LOJIPHIN/BizStack/api-aggregator.js:33:5) {
+  originalPath: '/api/auth/*'
+}
+
+Node.js v22.16.0

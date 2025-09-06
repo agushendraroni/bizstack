@@ -1,0 +1,93 @@
+{
+  "name": "BizStack MVP Business Workflows",
+  "workflows": [
+    {
+      "name": "1. New Customer Registration",
+      "description": "Automate customer onboarding process",
+      "trigger": "Webhook - Customer Registration",
+      "steps": [
+        {
+          "action": "Create Customer Record",
+          "service": "customer-service",
+          "endpoint": "POST /api/customers"
+        },
+        {
+          "action": "Send Welcome Email",
+          "service": "notification-service", 
+          "endpoint": "POST /api/notifications/email"
+        },
+        {
+          "action": "Create User Account",
+          "service": "user-service",
+          "endpoint": "POST /api/users"
+        },
+        {
+          "action": "Log Activity",
+          "service": "user-service",
+          "endpoint": "POST /api/user-activity-logs"
+        }
+      ]
+    },
+    {
+      "name": "2. Sales Transaction Processing",
+      "description": "Complete sales workflow from order to notification",
+      "trigger": "Webhook - New Order",
+      "steps": [
+        {
+          "action": "Create Order",
+          "service": "transaction-service",
+          "endpoint": "POST /api/orders"
+        },
+        {
+          "action": "Update Inventory",
+          "service": "product-service",
+          "endpoint": "PATCH /api/products/{id}/stock"
+        },
+        {
+          "action": "Update Customer Stats",
+          "service": "customer-service",
+          "endpoint": "PATCH /api/customers/{id}/stats"
+        },
+        {
+          "action": "Send Receipt",
+          "service": "notification-service",
+          "endpoint": "POST /api/notifications/email"
+        }
+      ]
+    },
+    {
+      "name": "3. Low Stock Alert System",
+      "description": "Monitor inventory and alert when stock is low",
+      "trigger": "Schedule - Daily 9 AM",
+      "steps": [
+        {
+          "action": "Check Low Stock Products",
+          "service": "product-service",
+          "endpoint": "GET /api/products/low-stock"
+        },
+        {
+          "action": "Send Alert to Manager",
+          "service": "notification-service",
+          "endpoint": "POST /api/notifications/email"
+        }
+      ]
+    },
+    {
+      "name": "4. Daily Business Report",
+      "description": "Generate and send daily business summary",
+      "trigger": "Schedule - Daily 6 PM",
+      "steps": [
+        {
+          "action": "Get Dashboard Data",
+          "service": "report-service",
+          "endpoint": "GET /api/reports/dashboard"
+        },
+        {
+          "action": "Send Summary Email",
+          "service": "notification-service",
+          "endpoint": "POST /api/notifications/email"
+        }
+      ]
+    }
+  ]
+}

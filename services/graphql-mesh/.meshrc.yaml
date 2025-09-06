@@ -9,15 +9,75 @@ sources:
       openapi:
         source: http://user-service:5002/swagger/v1/swagger.json
   
+  - name: OrganizationService
+    handler:
+      openapi:
+        source: http://organization-service:5003/swagger/v1/swagger.json
+  
   - name: ProductService
     handler:
       openapi:
         source: http://product-service:5004/swagger/v1/swagger.json
   
+  - name: CustomerService
+    handler:
+      openapi:
+        source: http://customer-service:5005/swagger/v1/swagger.json
+  
   - name: TransactionService
     handler:
       openapi:
         source: http://transaction-service:5006/swagger/v1/swagger.json
+  
+  - name: ReportService
+    handler:
+      openapi:
+        source: http://report-service:5007/swagger/v1/swagger.json
+  
+  - name: NotificationService
+    handler:
+      openapi:
+        source: http://notification-service:5008/swagger/v1/swagger.json
+  
+  - name: FileStorageService
+    handler:
+      openapi:
+        source: http://file-storage-service:5009/swagger/v1/swagger.json
+
+additionalTypeDefs: |
+  type BusinessDashboard {
+    todaySales: Float!
+    totalCustomers: Int!
+    lowStockCount: Int!
+    pendingOrders: Int!
+  }
+  
+  type QuickSaleResult {
+    success: Boolean!
+    orderId: String
+    message: String!
+  }
+  
+  input SaleItemInput {
+    productId: String!
+    quantity: Int!
+    price: Float!
+  }
+  
+  extend type Query {
+    businessDashboard: BusinessDashboard!
+  }
+  
+  extend type Mutation {
+    processQuickSale(
+      customerId: String!
+      items: [SaleItemInput!]!
+      paymentMethod: String!
+    ): QuickSaleResult!
+  }
+
+additionalResolvers:
+  - ./resolvers/business-aggregates.js
 
 serve:
   port: 4000

@@ -1,0 +1,41 @@
+# BizStack Core Business Schema
+# Essential GraphQL types for any business
+
+type BusinessDashboard {
+  todaySales: Float!
+  totalCustomers: Int!
+  lowStockCount: Int!
+  pendingOrders: Int!
+}
+
+type BusinessOverview {
+  totalUsers: Int!
+  totalProducts: Int!
+  totalCustomers: Int!
+  totalOrders: Int!
+}
+
+type QuickSaleResult {
+  success: Boolean!
+  orderId: String
+  message: String!
+}
+
+input SaleItemInput {
+  productId: String!
+  quantity: Int!
+  price: Float!
+}
+
+extend type Query {
+  businessDashboard: BusinessDashboard!
+  businessOverview: BusinessOverview!
+}
+
+extend type Mutation {
+  processQuickSale(
+    customerId: String!
+    items: [SaleItemInput!]!
+    paymentMethod: String!
+  ): QuickSaleResult!
+}

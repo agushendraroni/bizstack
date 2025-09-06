@@ -55,6 +55,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAll");
 
+// Health endpoint
+app.MapGet("/health", () => "Organization Service is running");
+
 // Custom middlewares
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();

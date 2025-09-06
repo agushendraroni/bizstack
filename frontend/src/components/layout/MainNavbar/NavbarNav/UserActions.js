@@ -19,6 +19,7 @@ export default class UserActions extends React.Component {
     };
 
     this.toggleUserActions = this.toggleUserActions.bind(this);
+    this.handleLogout = this.handleLogout.bind(this);
   }
 
   toggleUserActions() {
@@ -27,7 +28,20 @@ export default class UserActions extends React.Component {
     });
   }
 
+  handleLogout() {
+    // Clear authentication
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    
+    // Redirect to login
+    window.location.href = '/login';
+  }
+
   render() {
+    // Get user from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const username = user.username || 'Admin User';
+
     return (
       <NavItem tag={Dropdown} caret toggle={this.toggleUserActions}>
         <DropdownToggle caret tag={NavLink} className="text-nowrap px-3">
@@ -36,24 +50,24 @@ export default class UserActions extends React.Component {
             src={require("./../../../../images/avatars/0.jpg")}
             alt="User Avatar"
           />{" "}
-          <span className="d-none d-md-inline-block">Sierra Brooks</span>
+          <span className="d-none d-md-inline-block">{username}</span>
         </DropdownToggle>
         <Collapse tag={DropdownMenu} right small open={this.state.visible}>
-          <DropdownItem tag={Link} to="user-profile">
-            <i className="material-icons">&#xE7FD;</i> Profile
+          <DropdownItem tag={Link} to="/user-profile-lite">
+            <i className="fas fa-user mr-2"></i> Profile
           </DropdownItem>
-          <DropdownItem tag={Link} to="edit-user-profile">
-            <i className="material-icons">&#xE8B8;</i> Edit Profile
+          <DropdownItem tag={Link} to="/dashboard">
+            <i className="fas fa-tachometer-alt mr-2"></i> Dashboard
           </DropdownItem>
-          <DropdownItem tag={Link} to="file-manager-list">
-            <i className="material-icons">&#xE2C7;</i> Files
+          <DropdownItem tag={Link} to="/users">
+            <i className="fas fa-users mr-2"></i> User Management
           </DropdownItem>
-          <DropdownItem tag={Link} to="transaction-history">
-            <i className="material-icons">&#xE896;</i> Transactions
+          <DropdownItem tag={Link} to="/organizations">
+            <i className="fas fa-building mr-2"></i> Organizations
           </DropdownItem>
           <DropdownItem divider />
-          <DropdownItem tag={Link} to="/" className="text-danger">
-            <i className="material-icons text-danger">&#xE879;</i> Logout
+          <DropdownItem onClick={this.handleLogout} className="text-danger" style={{cursor: 'pointer'}}>
+            <i className="fas fa-sign-out-alt text-danger mr-2"></i> Logout
           </DropdownItem>
         </Collapse>
       </NavItem>

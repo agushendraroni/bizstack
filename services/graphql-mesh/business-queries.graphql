@@ -1,0 +1,267 @@
+# BizStack Core Business Queries
+# Ready-to-use GraphQL queries for any business
+
+# ===== DASHBOARD QUERY =====
+query BusinessDashboard {
+  # Get real-time business metrics
+  businessDashboard {
+    todaySales
+    totalCustomers
+    lowStockCount
+    pendingOrders
+  }
+  
+  # Get recent activity from report service
+  ReportService_getReportsControllerGetDashboard {
+    data {
+      todaySales
+      todayOrders
+      totalCustomers
+      lowStockProducts
+    }
+  }
+}
+
+# ===== COMPLETE BUSINESS OVERVIEW =====
+query CompleteBusinessOverview {
+  # Company information
+  OrganizationService_getCompaniesControllerGetAllCompanies {
+    data {
+      id
+      name
+      code
+      address
+      phone
+      email
+    }
+  }
+  
+  # User statistics
+  UserService_getUsersControllerGetAllUsers {
+    data {
+      id
+      email
+      name
+      role
+      isActive
+    }
+  }
+  
+  # Product inventory
+  ProductService_getProductsControllerGetAllProducts {
+    data {
+      id
+      name
+      price
+      stock
+      status
+    }
+  }
+  
+  # Customer base
+  CustomerService_getCustomersControllerGetAllCustomers {
+    data {
+      id
+      name
+      email
+      customerType
+      totalSpent
+      orderCount
+    }
+  }
+}
+
+# ===== SALES & INVENTORY MANAGEMENT =====
+query SalesInventoryStatus {
+  # Low stock alerts
+  ProductService_getProductsControllerGetLowStockProducts {
+    data {
+      id
+      name
+      stock
+      price
+    }
+  }
+  
+  # Recent orders
+  TransactionService_getOrdersControllerGetAllOrders {
+    data {
+      id
+      customerId
+      total
+      status
+      createdAt
+    }
+  }
+  
+  # VIP customers
+  CustomerService_getCustomersControllerGetVipCustomers {
+    data {
+      id
+      name
+      totalSpent
+      orderCount
+    }
+  }
+}
+
+# ===== QUICK SALE MUTATION =====
+mutation ProcessQuickSale($customerId: String!, $items: [SaleItemInput!]!, $paymentMethod: String!) {
+  processQuickSale(
+    customerId: $customerId
+    items: $items
+    paymentMethod: $paymentMethod
+  ) {
+    success
+    orderId
+    message
+  }
+}
+
+# ===== CUSTOMER MANAGEMENT =====
+mutation CreateNewCustomer($customerData: CustomerService_CreateCustomerDto!) {
+  CustomerService_postCustomersControllerCreateCustomer(createCustomerDto: $customerData) {
+    data {
+      id
+      name
+      email
+      customerType
+    }
+    isSuccess
+    message
+  }
+}
+
+# ===== INVENTORY UPDATE =====
+mutation UpdateProductStock($productId: String!, $stockData: ProductService_UpdateStockDto!) {
+  ProductService_patchProductsControllerUpdateStock(id: $productId, updateStockDto: $stockData) {
+    data
+    isSuccess
+    message
+  }
+}
+
+# ===== NOTIFICATION SYSTEM =====
+mutation SendBusinessNotification($notificationData: NotificationService_SendNotificationDto!) {
+  NotificationService_postNotificationsControllerSendNotification(sendNotificationDto: $notificationData) {
+    data
+    isSuccess
+    message
+  }
+}
+
+# ===== BUSINESS REPORTS =====
+query BusinessReports($startDate: String, $endDate: String) {
+  # Sales performance
+  ReportService_getReportsControllerGetSalesReport(startDate: $startDate, endDate: $endDate) {
+    data {
+      date
+      totalSales
+      totalOrders
+      averageOrderValue
+    }
+  }
+  
+  # Product performance
+  ReportService_getReportsControllerGetProductReport {
+    data {
+      productName
+      quantitySold
+      revenue
+      stock
+      status
+    }
+  }
+  
+  # Customer analytics
+  ReportService_getReportsControllerGetCustomerReport {
+    data {
+      customerName
+      totalSpent
+      totalOrders
+      lastOrderDate
+      customerType
+    }
+  }
+}
+
+# ===== FILE MANAGEMENT =====
+mutation UploadBusinessFile($fileData: FileStorageService_UploadFileDto!) {
+  FileStorageService_postFilesControllerUploadFile(uploadFileDto: $fileData) {
+    data {
+      fileId
+      fileName
+      fileUrl
+      fileSize
+    }
+    isSuccess
+    message
+  }
+}
+
+query GetBusinessFiles($category: String) {
+  FileStorageService_getFilesControllerGetFiles(category: $category) {
+    data {
+      id
+      fileName
+      originalFileName
+      category
+      fileSize
+      uploadedAt
+      fileUrl
+    }
+  }
+}
+
+# ===== AUTHENTICATION =====
+mutation BusinessLogin($credentials: AuthService_LoginRequest_Input!) {
+  AuthService_postAuthControllerLogin(loginRequest: $credentials) {
+    data {
+      token
+      refreshToken
+      user {
+        id
+        email
+        name
+        role
+      }
+    }
+    isSuccess
+    message
+  }
+}
+
+# ===== EXAMPLE VARIABLES =====
+# Use these variables with the mutations above:
+
+# For ProcessQuickSale:
+# {
+#   "customerId": "customer-uuid-here",
+#   "items": [
+#     {
+#       "productId": "product-uuid-here",
+#       "quantity": 2,
+#       "price": 25.99
+#     }
+#   ],
+#   "paymentMethod": "cash"
+# }
+
+# For CreateNewCustomer:
+# {
+#   "customerData": {
+#     "name": "John Doe",
+#     "email": "john@example.com",
+#     "phone": "+1234567890",
+#     "address": "123 Main St",
+#     "customerType": "Regular"
+#   }
+# }
+
+# For UpdateProductStock:
+# {
+#   "productId": "product-uuid-here",
+#   "stockData": {
+#     "quantity": 10
+#   }
+# }

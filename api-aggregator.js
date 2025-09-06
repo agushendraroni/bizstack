@@ -30,11 +30,11 @@ app.get('/health', (req, res) => {
 });
 
 // Auth Service Proxy
-app.all('/api/auth/*', async (req, res) => {
+app.use('/api/auth', async (req, res) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `${services.auth}${req.path}`,
+      url: `${services.auth}/api${req.path}`,
       data: req.body,
       headers: req.headers
     });
@@ -45,11 +45,11 @@ app.all('/api/auth/*', async (req, res) => {
 });
 
 // User Service Proxy
-app.all('/api/users/*', async (req, res) => {
+app.use('/api/users', async (req, res) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `${services.user}${req.path.replace('/users', '/Users')}`,
+      url: `${services.user}/api/Users${req.path}`,
       data: req.body,
       headers: req.headers
     });
@@ -60,11 +60,11 @@ app.all('/api/users/*', async (req, res) => {
 });
 
 // Product Service Proxy
-app.all('/api/products/*', async (req, res) => {
+app.use('/api/products', async (req, res) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `${services.product}${req.path.replace('/products', '/Products')}`,
+      url: `${services.product}/api/Products${req.path}`,
       data: req.body,
       headers: req.headers
     });
@@ -75,11 +75,11 @@ app.all('/api/products/*', async (req, res) => {
 });
 
 // Transaction Service Proxy
-app.all('/api/orders/*', async (req, res) => {
+app.use('/api/orders', async (req, res) => {
   try {
     const response = await axios({
       method: req.method,
-      url: `${services.transaction}${req.path.replace('/orders', '/Orders')}`,
+      url: `${services.transaction}/api/Orders${req.path}`,
       data: req.body,
       headers: req.headers
     });
