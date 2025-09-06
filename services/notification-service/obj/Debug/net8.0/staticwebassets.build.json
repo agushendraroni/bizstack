@@ -1,0 +1,24 @@
+{
+  "Version": 1,
+  "Hash": "Q2Z1tMw5i1B0KX8vXI/enWK5Sqw5KAjHunzdN3FMxmw=",
+  "Source": "notification-service",
+  "BasePath": "_content/notification-service",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "/mnt/data/Development/LOJIPHIN/BizStack/shared-library/shared-library.csproj",
+      "Version": 2,
+      "Source": "shared-library",
+      "GetPublishAssetsTargets": "ComputeReferencedStaticWebAssetsPublishManifest;GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

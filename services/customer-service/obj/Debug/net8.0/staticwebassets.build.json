@@ -1,0 +1,24 @@
+{
+  "Version": 1,
+  "Hash": "5WEUedVA2Yqc6A7emb/BPEzrf9b5ZzZ+yehcCttLed8=",
+  "Source": "customer-service",
+  "BasePath": "_content/customer-service",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "/mnt/data/Development/LOJIPHIN/BizStack/shared-library/shared-library.csproj",
+      "Version": 2,
+      "Source": "shared-library",
+      "GetPublishAssetsTargets": "ComputeReferencedStaticWebAssetsPublishManifest;GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

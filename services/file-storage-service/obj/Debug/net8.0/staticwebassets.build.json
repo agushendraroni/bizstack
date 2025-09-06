@@ -1,0 +1,32 @@
+{
+  "Version": 1,
+  "Hash": "tP5Y6Ib8K4++4J1FRXcH/6n9uHNhfr9Zy5jTiIRMDFQ=",
+  "Source": "file-storage-service",
+  "BasePath": "_content/file-storage-service",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "/mnt/data/Development/LOJIPHIN/BizStack/shared-library/shared-library.csproj",
+      "Version": 2,
+      "Source": "shared-library",
+      "GetPublishAssetsTargets": "ComputeReferencedStaticWebAssetsPublishManifest;GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained"
+    }
+  ],
+  "DiscoveryPatterns": [
+    {
+      "Name": "file-storage-service/wwwroot",
+      "Source": "file-storage-service",
+      "ContentRoot": "/mnt/data/Development/LOJIPHIN/BizStack/services/file-storage-service/wwwroot/",
+      "BasePath": "_content/file-storage-service",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [],
+  "Endpoints": []
+}

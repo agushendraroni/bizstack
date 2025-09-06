@@ -3,7 +3,30 @@ sources:
     handler:
       openapi:
         source: http://auth-service:5282/swagger/v1/swagger.json
+  - name: UserService
+    handler:
+      openapi:
+        source: http://user-service:5283/swagger/v1/swagger.json
+  - name: OrganizationService
+    handler:
+      openapi:
+        source: http://organization-service:5296/swagger/v1/swagger.json
+  - name: CustomerService
+    handler:
+      openapi:
+        source: http://customer-service:5284/swagger/v1/swagger.json
+  - name: ProductService
+    handler:
+      openapi:
+        source: http://product-service:5285/swagger/v1/swagger.json
+  - name: TransactionService
+    handler:
+      openapi:
+        source: http://transaction-service:5286/swagger/v1/swagger.json
 
 serve:
   port: 4000
   playground: true
+  cors:
+    origin: "*"
+    credentials: true
