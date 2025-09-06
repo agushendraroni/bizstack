@@ -4,7 +4,8 @@ import { Redirect } from "react-router-dom";
 // Layout Types
 import { DefaultLayout } from "./layouts";
 
-// Legacy Views - Move imports to top
+// Import User Management
+import UserManagement from "./pages/users/UserManagement";
 import BlogOverview from "./views/BlogOverview";
 import UserProfileLite from "./views/UserProfileLite";
 import AddNewPost from "./views/AddNewPost";
@@ -305,7 +306,7 @@ export default [
   {
     path: "/users",
     layout: DefaultLayout,
-    component: SimpleUserManagement
+    component: UserManagement
   },
   {
     path: "/organizations",
