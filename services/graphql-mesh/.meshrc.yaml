@@ -14,23 +14,14 @@ sources:
       openapi:
         source: http://product-service:5004/swagger/v1/swagger.json
   
-  - name: CustomerService
+  - name: TransactionService
     handler:
       openapi:
-        source: http://customer-service:5005/swagger/v1/swagger.json
-  
-  - name: ReportService
-    handler:
-      openapi:
-        source: http://report-service:5007/swagger/v1/swagger.json
-  
-  - name: NotificationService
-    handler:
-      openapi:
-        source: http://notification-service:5008/swagger/v1/swagger.json
+        source: http://transaction-service:5006/swagger/v1/swagger.json
 
 serve:
   port: 4000
   playground: true
   cors:
     origin: "*"
+    credentials: true

@@ -1,13 +1,17 @@
 -- Setup BizStack databases on existing PostgreSQL
 -- Run with: sudo -u postgres psql -f setup-existing-postgres.sql
 
--- Create missing databases
-CREATE DATABASE IF NOT EXISTS organization_db;
-CREATE DATABASE IF NOT EXISTS product_db;
-CREATE DATABASE IF NOT EXISTS customer_db;
-CREATE DATABASE IF NOT EXISTS transaction_db;
-CREATE DATABASE IF NOT EXISTS notification_db;
-CREATE DATABASE IF NOT EXISTS filestorage_db;
+-- Create missing databases (PostgreSQL doesn't support IF NOT EXISTS for databases)
+-- Check and create databases
+SELECT 'CREATE DATABASE auth_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'auth_db')\gexec
+SELECT 'CREATE DATABASE user_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'user_db')\gexec
+SELECT 'CREATE DATABASE organization_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'organization_db')\gexec
+SELECT 'CREATE DATABASE product_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'product_db')\gexec
+SELECT 'CREATE DATABASE customer_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'customer_db')\gexec
+SELECT 'CREATE DATABASE transaction_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'transaction_db')\gexec
+SELECT 'CREATE DATABASE notification_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'notification_db')\gexec
+SELECT 'CREATE DATABASE filestorage_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'filestorage_db')\gexec
+SELECT 'CREATE DATABASE n8n_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'n8n_db')\gexec
 
 -- Create bizstack user if not exists
 DO $$
