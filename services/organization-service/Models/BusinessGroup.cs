@@ -6,7 +6,6 @@ namespace OrganizationService.Models;
 
 public class BusinessGroup : BaseEntity
 {
-    public Guid Id { get; set; }
     public string Name { get; set; } = null!;
     public string? Description { get; set; }
 

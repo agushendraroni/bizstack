@@ -1,68 +1,48 @@
-using AuthService.Data;
-using AuthService.Helpers;
-using AuthService.Services.Interfaces;
-using AuthService.Services.Implementations;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
-using AuthService.MappingProfiles;
-using SharedLibrary.Middlewares;
-using SharedLibrary.Security.JWT;
-
-using SharedLibrary.Security.Password;
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using AuthService.Validation;
-using AuthService.Validation.Auth;
-using AuthService.Validation.Menu;
-using AuthService.Validation.Permission;
-using AuthService.Validation.RolePermission;
-using AuthService.Validation.Role;
+using AuthService.Data;
+using AuthService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Add Controllers & Swagger ---
+// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// --- Register IHttpContextAccessor ---
-builder.Services.AddHttpContextAccessor();
-
-// --- Register AuthDbContext with audit support ---
-builder.Services.AddScoped<AuthDbContext>(provider =>
+builder.Services.AddSwaggerGen(c =>
 {
-    var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
-    var user = httpContextAccessor.HttpContext?.User;
-
-    var username = user?.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(user.Identity.Name)
-        ? user.Identity.Name
-        : "system"; // fallback default
-
-    var options = provider.GetRequiredService<DbContextOptions<AuthDbContext>>();
-    return new AuthDbContext(options, username);
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Auth Service API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
 });
 
-// --- Register AutoMapper ---
-builder.Services.AddAutoMapper(typeof(Program));
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+// Database
+builder.Services.AddDbContext<AuthDbContext>(options =>
+    options.UseInMemoryDatabase("AuthDb"));
 
-// --- Register Internal Services ---
-builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
-
-// --- Bind & Register JwtSettings ---
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-if (jwtSettings == null)
-    throw new InvalidOperationException("JwtSettings section is missing or invalid in configuration.");
-
-// --- Register SharedLibrary JWT Service ---
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
-
-// --- JWT Authentication ---
+// JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -70,32 +50,33 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer = true,
             ValidateAudience = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-            ClockSkew = TimeSpan.Zero
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
 
-// --- CORS ---
+// Services
+builder.Services.AddScoped<IAuthService, AuthServiceImpl>();
+
+// CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
-builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
-
 var app = builder.Build();
 
-// --- Middleware ---
+// Configure the HTTP request pipeline.
 app.UseCors("AllowAll");
+
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -103,15 +84,11 @@ app.UseSwaggerUI(options =>
     options.RoutePrefix = string.Empty;
 });
 
-app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
-// --- Custom Middleware ---
-app.UseExceptionHandling();
-app.UseRequestLogging();
-app.UseRequestTiming();
+// Health check
+app.MapGet("/health", () => "Auth Service is running");
 
-await app.RunAsync();
+app.Run();

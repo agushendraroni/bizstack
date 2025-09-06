@@ -1,8 +1,8 @@
-
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using UserService.Data;
+using UserService.Models;
 using SharedLibrary.DTOs;
-using UserService.DTOs.UserPreference;
-using UserService.Services.Interfaces;
 
 namespace UserService.Controllers;
 
@@ -10,47 +10,106 @@ namespace UserService.Controllers;
 [Route("api/[controller]")]
 public class UserPreferencesController : ControllerBase
 {
-    private readonly IUserPreferenceService _service;
+    private readonly UserDbContext _context;
 
-    public UserPreferencesController(IUserPreferenceService service)
+    public UserPreferencesController(UserDbContext context)
     {
-        _service = service;
+        _context = context;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateUserPreferenceRequest request)
+    [HttpGet("user/{userId}")]
+    public async Task<IActionResult> GetUserPreferences(Guid userId)
     {
-        var result = await _service.CreateAsync(request, "system");
-        return Ok(ApiResponse<UserPreferenceResponse>.SuccessResponse(result));
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserPreferenceRequest request)
-    {
-        var result = await _service.UpdateAsync(id, request, "system");
-        return Ok(ApiResponse<UserPreferenceResponse>.SuccessResponse(result));
+        var preferences = await _context.UserPreferences
+            .Where(up => up.UserId == userId)
+            .ToListAsync();
+        
+        return Ok(ApiResponse<List<UserPreference>>.Success(preferences));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetUserPreference(Guid id)
     {
-        var result = await _service.GetByIdAsync(id);
-        if (result == null) return NotFound(ApiResponse<string>.Fail("Not found"));
-        return Ok(ApiResponse<UserPreferenceResponse>.SuccessResponse(result));
+        var preference = await _context.UserPreferences.FindAsync(id);
+        if (preference == null)
+            return NotFound(ApiResponse<UserPreference>.Error("User preference not found"));
+        
+        return Ok(ApiResponse<UserPreference>.Success(preference));
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetFiltered([FromQuery] UserPreferenceFilterRequest filter)
+    [HttpPost]
+    public async Task<IActionResult> CreateUserPreference([FromBody] CreateUserPreferenceDto dto)
     {
-        var result = await _service.GetFilteredAsync(filter);
-        return Ok(ApiResponse<PaginatedResponse<UserPreferenceResponse>>.SuccessResponse(result));
+        var preference = new UserPreference
+        {
+            UserId = dto.UserId,
+            Language = dto.Language,
+            Theme = dto.Theme,
+            Timezone = dto.Timezone,
+            ReceiveNotifications = dto.ReceiveNotifications
+        };
+
+        _context.UserPreferences.Add(preference);
+        await _context.SaveChangesAsync();
+        
+        return CreatedAtAction(nameof(GetUserPreference), new { id = preference.Id }, ApiResponse<UserPreference>.Success(preference));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateUserPreference(Guid id, [FromBody] UpdateUserPreferenceDto dto)
+    {
+        var preference = await _context.UserPreferences.FindAsync(id);
+        if (preference == null)
+            return NotFound(ApiResponse<UserPreference>.Error("User preference not found"));
+
+        if (!string.IsNullOrEmpty(dto.Language)) preference.Language = dto.Language;
+        if (!string.IsNullOrEmpty(dto.Theme)) preference.Theme = dto.Theme;
+        if (!string.IsNullOrEmpty(dto.Timezone)) preference.Timezone = dto.Timezone;
+        if (dto.ReceiveNotifications.HasValue) preference.ReceiveNotifications = dto.ReceiveNotifications.Value;
+
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponse<UserPreference>.Success(preference));
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> DeleteUserPreference(Guid id)
     {
-        var success = await _service.DeleteAsync(id);
-        if (!success) return NotFound(ApiResponse<string>.Fail("Not found"));
-        return Ok(ApiResponse<string>.SuccessResponse("Deleted"));
+        var preference = await _context.UserPreferences.FindAsync(id);
+        if (preference == null)
+            return NotFound(ApiResponse<UserPreference>.Error("User preference not found"));
+
+        _context.UserPreferences.Remove(preference);
+        await _context.SaveChangesAsync();
+        
+        return Ok(ApiResponse<string>.Success("User preference deleted successfully"));
     }
+
+    [HttpGet("user/{userId}/language/{language}")]
+    public async Task<IActionResult> GetUserPreferenceByLanguage(Guid userId, string language)
+    {
+        var preference = await _context.UserPreferences
+            .FirstOrDefaultAsync(up => up.UserId == userId && up.Language == language);
+        
+        if (preference == null)
+            return NotFound(ApiResponse<UserPreference>.Error("User preference not found"));
+        
+        return Ok(ApiResponse<UserPreference>.Success(preference));
+    }
+}
+
+public class CreateUserPreferenceDto
+{
+    public Guid UserId { get; set; }
+    public string Language { get; set; } = "en";
+    public string Theme { get; set; } = "light";
+    public string? Timezone { get; set; }
+    public bool ReceiveNotifications { get; set; } = true;
+}
+
+public class UpdateUserPreferenceDto
+{
+    public string? Language { get; set; }
+    public string? Theme { get; set; }
+    public string? Timezone { get; set; }
+    public bool? ReceiveNotifications { get; set; }
 }

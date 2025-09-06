@@ -5,15 +5,12 @@ namespace AuthService.Models
 {
     public class Role : BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
-
-        [Required, MaxLength(50)]
-        public string Name { get; set; } = string.Empty;
-
-        [Required]
-        public int CompanyId { get; set; }
-
+        [Required, MaxLength(100)]
+        public string Name { get; set; } = default!;
+        
+        public string? Description { get; set; }
+        
+        public Guid? CompanyId { get; set; }
 
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();

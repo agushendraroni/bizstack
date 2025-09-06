@@ -4,10 +4,8 @@ using SharedLibrary.Entities;
 
 public class LegalDocument : BaseEntity
 {
-    public Guid Id { get; set; }
     public Guid CompanyId { get; set; }
     public Company Company { get; set; } = null!;
-
     public string DocumentType { get; set; } = null!;
     public string DocumentNumber { get; set; } = null!;
     public DateTime? IssueDate { get; set; }
@@ -15,5 +13,4 @@ public class LegalDocument : BaseEntity
     public string? Issuer { get; set; }
     public string? Description { get; set; }
     public string? FileUrl { get; set; }
-
 }

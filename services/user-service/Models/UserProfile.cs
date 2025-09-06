@@ -6,8 +6,7 @@ namespace UserService.Models
 {
     public class UserProfile : BaseEntity
     {
-        [Key]
-        public Guid Id { get; set; } // Same as AuthService UserId
+        public Guid UserId { get; set; } // Foreign key to User
 
         [Required]
         [MaxLength(100)]

@@ -1,57 +1,59 @@
-
-using SharedLibrary.DTOs;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrganizationService.DTOs.Company; 
-using OrganizationService.Services.Interfaces;
+using OrganizationService.DTOs;
+using OrganizationService.Services;
 
-namespace OrganizationService.Controllers
+namespace OrganizationService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class CompaniesController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class CompaniesController : ControllerBase
+    private readonly ICompanyService _companyService;
+
+    public CompaniesController(ICompanyService companyService)
     {
-        private readonly ICompanyService _companyService;
+        _companyService = companyService;
+    }
 
-        public CompaniesController(ICompanyService companyService)
-        {
-            _companyService = companyService;
-        }
+    [HttpGet]
+    public async Task<IActionResult> GetAllCompanies()
+    {
+        var result = await _companyService.GetAllCompaniesAsync();
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateCompanyRequest request)
-        {
-            var result = await _companyService.CreateAsync(request);
-            return Ok(ApiResponse<CompanyResponse>.SuccessResponse(result));
-        }
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetCompanyById(Guid id)
+    {
+        var result = await _companyService.GetCompanyByIdAsync(id);
+        return result.IsSuccess ? Ok(result) : NotFound(result);
+    }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCompanyRequest request)
-        {
-            var result = await _companyService.UpdateAsync(id, request);
-            return Ok(ApiResponse<CompanyResponse>.SuccessResponse(result));
-        }
+    [HttpGet("code/{code}")]
+    public async Task<IActionResult> GetCompanyByCode(string code)
+    {
+        var result = await _companyService.GetCompanyByCodeAsync(code);
+        return result.IsSuccess ? Ok(result) : NotFound(result);
+    }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _companyService.DeleteAsync(id);
-            return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
-        }
+    [HttpPost]
+    public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto createCompanyDto)
+    {
+        var result = await _companyService.CreateCompanyAsync(createCompanyDto);
+        return result.IsSuccess ? CreatedAtAction(nameof(GetCompanyById), new { id = result.Data?.Id }, result) : BadRequest(result);
+    }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var result = await _companyService.GetByIdAsync(id);
-            return Ok(ApiResponse<CompanyResponse>.SuccessResponse(result));
-        }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] UpdateCompanyDto updateCompanyDto)
+    {
+        var result = await _companyService.UpdateCompanyAsync(id, updateCompanyDto);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] CompanyFilterRequest filter)
-        {
-            var result = await _companyService.GetAllAsync(filter);
-            return Ok(ApiResponse<PaginatedResponse<CompanyResponse>>.SuccessResponse(result));
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCompany(Guid id)
+    {
+        var result = await _companyService.DeleteCompanyAsync(id);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 }

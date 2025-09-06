@@ -6,9 +6,6 @@ namespace UserService.Models
 {
     public class UserActivityLog : BaseEntity
     {
-        [Key]
-        public Guid Id { get; set; }
-
         [Required]
         public Guid UserId { get; set; }
 

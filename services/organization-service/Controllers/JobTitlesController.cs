@@ -1,56 +1,100 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrganizationService.DTOs.JobTitle;
-using OrganizationService.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using OrganizationService.Data;
+using OrganizationService.Models;
 using SharedLibrary.DTOs;
 
-namespace OrganizationService.Controllers
+namespace OrganizationService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class JobTitlesController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class JobTitlesController : ControllerBase
+    private readonly OrganizationDbContext _context;
+
+    public JobTitlesController(OrganizationDbContext context)
     {
-        private readonly IJobTitleService _jobTitleService;
-
-        public JobTitlesController(IJobTitleService jobTitleService)
-        {
-            _jobTitleService = jobTitleService;
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateJobTitleRequest request)
-        {
-            var result = await _jobTitleService.CreateAsync(request);
-            return Ok(ApiResponse<JobTitleResponse>.SuccessResponse(result));
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateJobTitleRequest request)
-        {
-            var result = await _jobTitleService.UpdateAsync(id, request);
-            return Ok(ApiResponse<JobTitleResponse>.SuccessResponse(result));
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _jobTitleService.DeleteAsync(id);
-            return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var result = await _jobTitleService.GetByIdAsync(id);
-            return Ok(ApiResponse<JobTitleResponse>.SuccessResponse(result));
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] JobTitleFilterRequest filter)
-        {
-            var result = await _jobTitleService.GetAllAsync(filter);
-            return Ok(ApiResponse<PaginatedResponse<JobTitleResponse>>.SuccessResponse(result));
-        }
+        _context = context;
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetJobTitles()
+    {
+        var jobTitles = await _context.JobTitles.ToListAsync();
+        return Ok(ApiResponse<List<JobTitle>>.Success(jobTitles));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetJobTitle(Guid id)
+    {
+        var jobTitle = await _context.JobTitles.FindAsync(id);
+        if (jobTitle == null)
+            return NotFound(ApiResponse<JobTitle>.Error("Job title not found"));
+        
+        return Ok(ApiResponse<JobTitle>.Success(jobTitle));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateJobTitle([FromBody] CreateJobTitleDto dto)
+    {
+        var jobTitle = new JobTitle
+        {
+            Title = dto.Title,
+            Description = dto.Description
+        };
+
+        _context.JobTitles.Add(jobTitle);
+        await _context.SaveChangesAsync();
+        
+        return CreatedAtAction(nameof(GetJobTitle), new { id = jobTitle.Id }, ApiResponse<JobTitle>.Success(jobTitle));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateJobTitle(Guid id, [FromBody] UpdateJobTitleDto dto)
+    {
+        var jobTitle = await _context.JobTitles.FindAsync(id);
+        if (jobTitle == null)
+            return NotFound(ApiResponse<JobTitle>.Error("Job title not found"));
+
+        if (!string.IsNullOrEmpty(dto.Title)) jobTitle.Title = dto.Title;
+        if (!string.IsNullOrEmpty(dto.Description)) jobTitle.Description = dto.Description;
+
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponse<JobTitle>.Success(jobTitle));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteJobTitle(Guid id)
+    {
+        var jobTitle = await _context.JobTitles.FindAsync(id);
+        if (jobTitle == null)
+            return NotFound(ApiResponse<JobTitle>.Error("Job title not found"));
+
+        _context.JobTitles.Remove(jobTitle);
+        await _context.SaveChangesAsync();
+        
+        return Ok(ApiResponse<string>.Success("Job title deleted successfully"));
+    }
+
+    [HttpGet("search/{title}")]
+    public async Task<IActionResult> SearchJobTitles(string title)
+    {
+        var jobTitles = await _context.JobTitles
+            .Where(jt => jt.Title.Contains(title))
+            .ToListAsync();
+        
+        return Ok(ApiResponse<List<JobTitle>>.Success(jobTitles));
+    }
+}
+
+public class CreateJobTitleDto
+{
+    public string Title { get; set; } = string.Empty;
+    public string? Description { get; set; }
+}
+
+public class UpdateJobTitleDto
+{
+    public string? Title { get; set; }
+    public string? Description { get; set; }
 }

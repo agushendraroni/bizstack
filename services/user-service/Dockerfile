@@ -1,9 +1,9 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 5283
 ENV ASPNETCORE_URLS=http://+:5283
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy seluruh folder services dan shared-library agar struktur path tetap

@@ -1,84 +1,85 @@
 using Microsoft.EntityFrameworkCore;
 using OrganizationService.Models;
-using SharedLibrary.Entities;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace OrganizationService.Data
+namespace OrganizationService.Data;
+
+public class OrganizationDbContext : DbContext
 {
-    public class OrganizationDbContext : DbContext
+    public OrganizationDbContext(DbContextOptions<OrganizationDbContext> options) : base(options) { }
+
+    public DbSet<Company> Companies { get; set; }
+    public DbSet<Branch> Branches { get; set; }
+    public DbSet<Division> Divisions { get; set; }
+    public DbSet<JobTitle> JobTitles { get; set; }
+    public DbSet<BusinessGroup> BusinessGroups { get; set; }
+    public DbSet<CostCenter> CostCenters { get; set; }
+    public DbSet<LegalDocument> LegalDocuments { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        private readonly string _currentUser;
+        base.OnModelCreating(modelBuilder);
 
-        public OrganizationDbContext(DbContextOptions<OrganizationDbContext> options, string currentUser = "system")
-            : base(options)
+        // Company configuration
+        modelBuilder.Entity<Company>(entity =>
         {
-            _currentUser = currentUser;
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
 
-        // DbSets
-        public DbSet<Company> Companies => Set<Company>();
-        public DbSet<Branch> Branches => Set<Branch>();
-        public DbSet<Division> Divisions => Set<Division>();
-        public DbSet<CostCenter> CostCenters => Set<CostCenter>();
-        public DbSet<JobTitle> JobTitles => Set<JobTitle>();
-        public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
-        public DbSet<BusinessGroup> BusinessGroups => Set<BusinessGroup>();
-
-        // Add more DbSets as needed, e.g.:
-        // public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
-        // public DbSet<JobTitle> JobTitles => Set<JobTitle>();
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // Branch configuration
+        modelBuilder.Entity<Branch>(entity =>
         {
-            base.OnModelCreating(modelBuilder);
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+            entity.HasOne<Company>()
+                  .WithMany()
+                  .HasForeignKey(b => b.CompanyId);
+        });
 
-            // Example: If you use composite keys or custom relationships, define them here
-            // modelBuilder.Entity<JobTitleDepartment>()
-            //     .HasKey(jt => new { jt.JobTitleId, jt.DepartmentId });
-
-            // Optional: Global filters (e.g., soft delete)
-            modelBuilder.Entity<Company>().HasQueryFilter(e => !e.IsDeleted);
-        }
-
-        public override int SaveChanges()
+        // Division configuration
+        modelBuilder.Entity<Division>(entity =>
         {
-            ApplyAuditInformation();
-            return base.SaveChanges();
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.HasOne<Company>()
+                  .WithMany()
+                  .HasForeignKey(d => d.CompanyId);
+        });
 
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        // JobTitle configuration
+        modelBuilder.Entity<JobTitle>(entity =>
         {
-            ApplyAuditInformation();
-            return base.SaveChangesAsync(cancellationToken);
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(100);
+        });
 
-        private void ApplyAuditInformation()
+        // BusinessGroup configuration
+        modelBuilder.Entity<BusinessGroup>(entity =>
         {
-            var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is BaseEntity && 
-                            (e.State == EntityState.Added || e.State == EntityState.Modified));
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+        });
 
-            var now = DateTime.UtcNow;
+        // CostCenter configuration
+        modelBuilder.Entity<CostCenter>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+        });
 
-            foreach (var entry in entries)
-            {
-                var entity = (BaseEntity)entry.Entity;
-
-                if (entry.State == EntityState.Added)
-                {
-                    entity.CreatedAt = now;
-                    entity.CreatedBy ??= _currentUser;
-                    entity.IsActive = true;
-                }
-                else if (entry.State == EntityState.Modified)
-                {
-                    entity.ChangedAt = now;
-                    entity.ChangedBy = _currentUser;
-                }
-            }
-        }
+        // LegalDocument configuration
+        modelBuilder.Entity<LegalDocument>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DocumentType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.DocumentNumber).IsRequired().HasMaxLength(100);
+            entity.HasOne<Company>()
+                  .WithMany()
+                  .HasForeignKey(l => l.CompanyId);
+        });
     }
 }

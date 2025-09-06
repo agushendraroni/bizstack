@@ -1,69 +1,70 @@
-
-using System;
-using System.Security.Claims;
-using AuthService.DTOs.Auth;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AuthService.DTOs;
+using AuthService.Services;
+using SharedLibrary.DTOs;
 
-
-namespace AuthService.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+namespace AuthService.Controllers
 {
-    private readonly AuthService.Services.Interfaces.IAuthorizationService _authService;
-
-    public AuthController(AuthService.Services.Interfaces.IAuthorizationService authService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _authService = authService;
-    }
+        private readonly IAuthService _authService;
 
-    [HttpPost("login")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Login(LoginRequest request)
-    {
-        var result = await _authService.LoginAsync(request);
-        return Ok(result);
-    }
-
-    [HttpPost("refresh")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Refresh(RefreshTokenRequest request)
-    {
-        var result = await _authService.RefreshAsync(request);
-        return Ok(result);
-    }
-
-    [HttpPost("logout")]
-    [Authorize]
-    public async Task<IActionResult> Logout()
-    {
-        var nameIdentifierClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (nameIdentifierClaim == null)
+        public AuthController(IAuthService authService)
         {
-            return Unauthorized("User identifier claim not found.");
+            _authService = authService;
         }
-        var userId = int.Parse(nameIdentifierClaim.Value);
-        await _authService.LogoutAsync(userId);
-        return NoContent();
-    }
 
-    [HttpGet("me")]
-    [Authorize]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public IActionResult Me()
-    {
-        var nameIdentifierClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        var roleClaims = User.FindAll("RoleId").Select(c => int.Parse(c.Value)).ToList();
-
-        return Ok(new
+        [HttpPost("login")]
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest request)
         {
-            Id = nameIdentifierClaim != null ? int.Parse(nameIdentifierClaim.Value) : 0,
-            Username = User.Identity?.Name,
-            CompanyId = User.FindFirst("CompanyId")?.Value,
-            RoleIds = roleClaims
-        });
+            var result = await _authService.LoginAsync(request);
+            
+            if (result == null)
+                return Unauthorized(ApiResponse<LoginResponse>.Error("Invalid username or password"));
+
+            return Ok(ApiResponse<LoginResponse>.Success(result, "Login successful"));
+        }
+
+        [HttpPost("refresh")]
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> RefreshToken([FromBody] string refreshToken)
+        {
+            var result = await _authService.RefreshTokenAsync(refreshToken);
+            
+            if (result == null)
+                return Unauthorized(ApiResponse<LoginResponse>.Error("Invalid refresh token"));
+
+            return Ok(ApiResponse<LoginResponse>.Success(result, "Token refreshed"));
+        }
+
+        [HttpPost("logout")]
+        public async Task<ActionResult<ApiResponse<string>>> Logout([FromBody] string refreshToken)
+        {
+            var success = await _authService.LogoutAsync(refreshToken);
+            
+            if (!success)
+                return BadRequest(ApiResponse<string>.Error("Invalid refresh token"));
+
+            return Ok(ApiResponse<string>.Success("Logged out successfully"));
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<ApiResponse<string>>> Register([FromBody] RegisterRequest request)
+        {
+            var success = await _authService.RegisterAsync(request.Username, request.Password, request.CompanyId);
+            
+            if (!success)
+                return BadRequest(ApiResponse<string>.Error("Username already exists"));
+
+            return Ok(ApiResponse<string>.Success("User registered successfully"));
+        }
     }
 
+    public class RegisterRequest
+    {
+        public string Username { get; set; } = default!;
+        public string Password { get; set; } = default!;
+        public Guid? CompanyId { get; set; }
+    }
 }

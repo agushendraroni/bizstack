@@ -1,56 +1,104 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrganizationService.DTOs.Division;
-using OrganizationService.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using OrganizationService.Data;
+using OrganizationService.Models;
 using SharedLibrary.DTOs;
 
-namespace OrganizationService.Controllers
+namespace OrganizationService.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class DivisionsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class DivisionsController : ControllerBase
+    private readonly OrganizationDbContext _context;
+
+    public DivisionsController(OrganizationDbContext context)
     {
-        private readonly IDivisionService _divisionService;
-
-        public DivisionsController(IDivisionService divisionService)
-        {
-            _divisionService = divisionService;
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateDivisionRequest request)
-        {
-            var result = await _divisionService.CreateAsync(request);
-            return Ok(ApiResponse<DivisionResponse>.SuccessResponse(result));
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDivisionRequest request)
-        {
-            var result = await _divisionService.UpdateAsync(id, request);
-            return Ok(ApiResponse<DivisionResponse>.SuccessResponse(result));
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _divisionService.DeleteAsync(id);
-            return Ok(ApiResponse<string>.SuccessResponse("Deleted successfully"));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-        {
-            var result = await _divisionService.GetByIdAsync(id);
-            return Ok(ApiResponse<DivisionResponse>.SuccessResponse(result));
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] DivisionFilterRequest filter)
-        {
-            var result = await _divisionService.GetAllAsync(filter);
-            return Ok(ApiResponse<PaginatedResponse<DivisionResponse>>.SuccessResponse(result));
-        }
+        _context = context;
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDivisions()
+    {
+        var divisions = await _context.Divisions
+            .Include(d => d.Company)
+            .ToListAsync();
+        return Ok(ApiResponse<List<Division>>.Success(divisions));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetDivision(Guid id)
+    {
+        var division = await _context.Divisions
+            .Include(d => d.Company)
+            .FirstOrDefaultAsync(d => d.Id == id);
+        
+        if (division == null)
+            return NotFound(ApiResponse<Division>.Error("Division not found"));
+        
+        return Ok(ApiResponse<Division>.Success(division));
+    }
+
+    [HttpGet("company/{companyId}")]
+    public async Task<IActionResult> GetDivisionsByCompany(Guid companyId)
+    {
+        var divisions = await _context.Divisions
+            .Where(d => d.CompanyId == companyId)
+            .Include(d => d.Company)
+            .ToListAsync();
+        
+        return Ok(ApiResponse<List<Division>>.Success(divisions));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateDivision([FromBody] CreateDivisionDto dto)
+    {
+        var division = new Division
+        {
+            Name = dto.Name,
+            CompanyId = dto.CompanyId
+        };
+
+        _context.Divisions.Add(division);
+        await _context.SaveChangesAsync();
+        
+        return CreatedAtAction(nameof(GetDivision), new { id = division.Id }, ApiResponse<Division>.Success(division));
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateDivision(Guid id, [FromBody] UpdateDivisionDto dto)
+    {
+        var division = await _context.Divisions.FindAsync(id);
+        if (division == null)
+            return NotFound(ApiResponse<Division>.Error("Division not found"));
+
+        if (!string.IsNullOrEmpty(dto.Name)) division.Name = dto.Name;
+
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponse<Division>.Success(division));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteDivision(Guid id)
+    {
+        var division = await _context.Divisions.FindAsync(id);
+        if (division == null)
+            return NotFound(ApiResponse<Division>.Error("Division not found"));
+
+        _context.Divisions.Remove(division);
+        await _context.SaveChangesAsync();
+        
+        return Ok(ApiResponse<string>.Success("Division deleted successfully"));
+    }
+}
+
+public class CreateDivisionDto
+{
+    public string Name { get; set; } = string.Empty;
+    public Guid CompanyId { get; set; }
+}
+
+public class UpdateDivisionDto
+{
+    public string? Name { get; set; }
 }

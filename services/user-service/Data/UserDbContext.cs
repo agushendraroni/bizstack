@@ -1,78 +1,58 @@
 using Microsoft.EntityFrameworkCore;
 using UserService.Models;
-using SharedLibrary.Entities;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace UserService.Data
+namespace UserService.Data;
+
+public class UserDbContext : DbContext
 {
-    public class UserDbContext : DbContext
+    public UserDbContext(DbContextOptions<UserDbContext> options) : base(options) { }
+
+    public DbSet<User> Users { get; set; }
+    public DbSet<UserProfile> UserProfiles { get; set; }
+    public DbSet<UserPreference> UserPreferences { get; set; }
+    public DbSet<UserActivityLog> UserActivityLogs { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        private readonly string _currentUser;
+        base.OnModelCreating(modelBuilder);
 
-        public UserDbContext(DbContextOptions<UserDbContext> options, string currentUser = "system")
-            : base(options)
+        // User configuration
+        modelBuilder.Entity<User>(entity =>
         {
-            _currentUser = currentUser;
-        }
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.LastName).IsRequired().HasMaxLength(50);
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.Email).IsUnique();
+        });
 
-        // DbSets
-        public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
-        public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
-        public DbSet<UserActivityLog> UserActivityLogs => Set<UserActivityLog>();
-
-
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // UserProfile configuration
+        modelBuilder.Entity<UserProfile>(entity =>
         {
-            base.OnModelCreating(modelBuilder);
+            entity.HasKey(e => e.Id);
+            entity.HasOne<User>()
+                  .WithOne(u => u.Profile)
+                  .HasForeignKey<UserProfile>(p => p.UserId);
+        });
 
-            // Example: If you use composite keys or custom relationships, define them here
-
-            // Optional: Global filters (e.g., soft delete)
-            modelBuilder.Entity<UserProfile>().HasQueryFilter(e => !e.IsDeleted);
-            modelBuilder.Entity<UserPreference>().HasQueryFilter(e => !e.IsDeleted);
-            modelBuilder.Entity<UserActivityLog>().HasQueryFilter(e => !e.IsDeleted);
-        }
-
-        public override int SaveChanges()
+        // UserPreference configuration
+        modelBuilder.Entity<UserPreference>(entity =>
         {
-            ApplyAuditInformation();
-            return base.SaveChanges();
-        }
+            entity.HasKey(e => e.Id);
+            entity.HasOne<User>()
+                  .WithMany(u => u.Preferences)
+                  .HasForeignKey(p => p.UserId);
+        });
 
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        // UserActivityLog configuration
+        modelBuilder.Entity<UserActivityLog>(entity =>
         {
-            ApplyAuditInformation();
-            return base.SaveChangesAsync(cancellationToken);
-        }
-
-        private void ApplyAuditInformation()
-        {
-            var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is BaseEntity && 
-                            (e.State == EntityState.Added || e.State == EntityState.Modified));
-
-            var now = DateTime.UtcNow;
-
-            foreach (var entry in entries)
-            {
-                var entity = (BaseEntity)entry.Entity;
-
-                if (entry.State == EntityState.Added)
-                {
-                    entity.CreatedAt = now;
-                    entity.CreatedBy ??= _currentUser;
-                    entity.IsActive = true;
-                }
-                else if (entry.State == EntityState.Modified)
-                {
-                    entity.ChangedAt = now;
-                    entity.ChangedBy = _currentUser;
-                }
-            }
-        }
+            entity.HasKey(e => e.Id);
+            entity.HasOne<User>()
+                  .WithMany(u => u.ActivityLogs)
+                  .HasForeignKey(l => l.UserId);
+        });
     }
 }

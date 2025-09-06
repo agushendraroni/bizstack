@@ -14,8 +14,8 @@ NC='\033[0m'
 FRONTEND_SERVICE=("frontend" "./frontend" 3000 "Frontend")
 BACKEND_SERVICES=(
   "auth-service ./services/auth-service 5282 'Auth' /index.html"
-  "user-service ./services/user-service 5283 'User' /index.html"
-  "organization-service ./services/organization-service 5296 'Org' /swagger"
+  "user-service ./services/user-service 5283 'User' "
+  "organization-service ./services/organization-service 5296 'Org' "
   "graphql-mesh ./services/graphql-mesh 4000 'GraphQL' "
 )
 OTHER_SERVICES=(
