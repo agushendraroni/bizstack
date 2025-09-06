@@ -1,25 +1,19 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 5296
-ENV ASPNETCORE_URLS=http://+:5296
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
+COPY ["services/organization-service/organization-service.csproj", "services/organization-service/"]
+COPY ["shared-library/shared-library.csproj", "shared-library/"]
+RUN dotnet restore "services/organization-service/organization-service.csproj"
+COPY . .
+WORKDIR "/src/services/organization-service"
+RUN dotnet build "organization-service.csproj" -c Release -o /app/build
 
-# Copy entire services and shared-library folders
-COPY services ./services
-COPY shared-library ./shared-library
-
-WORKDIR /src/services/organization-service
-
-RUN dotnet restore
-RUN dotnet build -c Release -o /app/build
-RUN dotnet publish -c Release -o /app/publish
+FROM build AS publish
+RUN dotnet publish "organization-service.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "organization-service.dll"]
-
-
-
