@@ -29,8 +29,9 @@ builder.Services.AddAutoMapper(typeof(UserMappingProfile));
 builder.Services.AddHttpContextAccessor();
 
 // --- DB Context ---
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseInMemoryDatabase("UserDb"));
+    options.UseNpgsql(connectionString));
 
 // --- HTTP Clients ---
 builder.Services.AddHttpClient<IOrganizationHttpClient, OrganizationHttpClient>(client =>
@@ -84,6 +85,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Auto-migrate database
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+    context.Database.Migrate();
+}
 
 // --- Middleware ---
 app.UseCors("AllowAll");

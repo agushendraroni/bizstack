@@ -38,9 +38,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Database
+// Database - PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseInMemoryDatabase("AuthDb"));
+    options.UseNpgsql(connectionString));
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -73,6 +74,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Auto-migrate database
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    context.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 app.UseCors("AllowAll");

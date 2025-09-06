@@ -1,24 +1,7 @@
-services:
-  n8n:
-    image: n8nio/n8n
-    container_name: BizStack-n8n
-    restart: always
-    ports:
-      - "5678:5678"
-    environment:
-      DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: 172.17.0.1
-      DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: n8n_db
-      DB_POSTGRESDB_USER: n8n_user
-      DB_POSTGRESDB_PASSWORD: n8n_pass
-      N8N_BASIC_AUTH_ACTIVE: "true"
-      N8N_BASIC_AUTH_USER: admin
-      N8N_BASIC_AUTH_PASSWORD: admin123
-      N8N_DISABLE_TRACKING: "true"
-    volumes:
-      - n8n_data:/home/node/.n8n
+version: '3.8'
 
+services:
+  # Core Services (using existing PostgreSQL on host)
   auth-service:
     build:
       context: .
@@ -27,11 +10,11 @@ services:
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Default: Host=172.17.0.1;Port=5432;Database=auth_db;Username=auth_user;Password=auth_pass
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=auth_db;Username=bizstack_admin;Password=bizstack_pass123"
     ports:
-      - "5282:5282"
-    depends_on:
-      - n8n
+      - "5001:5001"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   user-service:
     build:
@@ -41,12 +24,135 @@ services:
     restart: always
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=172.17.0.1;Port=5432;Database=user_db;Username=user_user;Password=user_pass
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=user_db;Username=bizstack_admin;Password=bizstack_pass123"
     ports:
-      - "5283:5283"
-    depends_on:
-      - n8n
+      - "5002:5002"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
+  organization-service:
+    build:
+      context: .
+      dockerfile: services/organization-service/Dockerfile
+    container_name: BizStack-organization-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=organization_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5003:5003"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Business Core Services
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    container_name: BizStack-product-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=product_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5004:5004"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: services/customer-service/Dockerfile
+    container_name: BizStack-customer-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=customer_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5005:5005"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  transaction-service:
+    build:
+      context: .
+      dockerfile: services/transaction-service/Dockerfile
+    container_name: BizStack-transaction-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=transaction_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5006:5006"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Business Intelligence Services
+  report-service:
+    build:
+      context: .
+      dockerfile: services/report-service/Dockerfile
+    container_name: BizStack-report-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5007:5007"
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: BizStack-notification-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=notification_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5008:5008"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  file-storage-service:
+    build:
+      context: .
+      dockerfile: services/file-storage-service/Dockerfile
+    container_name: BizStack-file-storage-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=host.docker.internal;Port=5432;Database=filestorage_db;Username=bizstack_admin;Password=bizstack_pass123"
+    ports:
+      - "5009:5009"
+    volumes:
+      - file_uploads:/app/wwwroot/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Automation & Integration
+  n8n:
+    image: n8nio/n8n
+    container_name: BizStack-n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: host.docker.internal
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: bizstack_admin
+      DB_POSTGRESDB_PASSWORD: bizstack_pass123
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin123
+      N8N_DISABLE_TRACKING: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # API Gateway & Frontend
   graphql-mesh:
     build:
       context: ./services/graphql-mesh
@@ -58,6 +164,10 @@ services:
     depends_on:
       - auth-service
       - user-service
+      - organization-service
+      - product-service
+      - customer-service
+      - transaction-service
 
   frontend:
     build:
@@ -68,24 +178,14 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - n8n
+      - graphql-mesh
       - auth-service
       - user-service
-      - graphql-mesh
-
-  organization-service:
-    build:
-      context: .
-      dockerfile: services/organization-service/Dockerfile
-    container_name: BizStack-organization-service
-    restart: always
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=172.17.0.1;Port=5432;Database=organization_db;Username=org_user;Password=org_pass
-    ports:
-      - "5296:5296"
-    depends_on:
-      - n8n
+      - organization-service
+      - product-service
+      - customer-service
+      - transaction-service
 
 volumes:
   n8n_data:
+  file_uploads:

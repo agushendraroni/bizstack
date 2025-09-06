@@ -14,8 +14,9 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Database
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CustomerDbContext>(options =>
-    options.UseInMemoryDatabase("CustomerDb"));
+    options.UseNpgsql(connectionString));
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(CustomerMappingProfile));
