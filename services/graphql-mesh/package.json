@@ -6,16 +6,11 @@
   "scripts": {
     "dev": "graphql-mesh dev",
     "build": "graphql-mesh build",
-    "start": "graphql-mesh start",
-    "validate": "graphql-mesh validate"
+    "start": "graphql-mesh start"
   },
-  "keywords": ["graphql", "mesh", "bizstack", "microservices"],
-  "author": "BizStack Team",
-  "license": "MIT",
   "dependencies": {
     "@graphql-mesh/cli": "^0.100.5",
     "@graphql-mesh/openapi": "^0.109.10",
-    "@graphql-mesh/transform-rename": "^0.100.5",
     "graphql": "^16.11.0"
   }
 }

@@ -161,6 +161,8 @@ services:
     restart: always
     ports:
       - "4000:4000"
+    environment:
+      - NODE_ENV=production
     depends_on:
       - auth-service
       - user-service
@@ -168,6 +170,9 @@ services:
       - product-service
       - customer-service
       - transaction-service
+      - report-service
+      - notification-service
+      - file-storage-service
 
   frontend:
     build:
