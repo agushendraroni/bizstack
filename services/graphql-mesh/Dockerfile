@@ -1,21 +1,26 @@
-# Gunakan node image yang ringan
 FROM node:18-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Salin file konfigurasi dan dependency
+# Copy package files
 COPY package*.json ./
 COPY .meshrc.yaml ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
 
-# Salin seluruh project (termasuk node_modules dan mesh.config.yaml)
+# Copy source code
 COPY . .
 
-# Build jika diperlukan (opsional, tergantung setup Mesh kamu)
-# RUN npm run build
+# Build GraphQL Mesh
+RUN npm run build
 
-# Jalankan GraphQL Mesh
-CMD ["npm", "run", "mesh:dev"]
+# Expose port
+EXPOSE 4000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:4000/healthz || exit 1
+
+# Start the application
+CMD ["npm", "start"]

@@ -1,18 +1,21 @@
 {
-  "name": "graphql-mesh-project",
+  "name": "bizstack-graphql-mesh",
   "version": "1.0.0",
+  "description": "BizStack GraphQL Mesh - Unified API Gateway",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-     "mesh:dev": "graphql-mesh dev"
+    "dev": "graphql-mesh dev",
+    "build": "graphql-mesh build",
+    "start": "graphql-mesh start",
+    "validate": "graphql-mesh validate"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["graphql", "mesh", "bizstack", "microservices"],
+  "author": "BizStack Team",
+  "license": "MIT",
   "dependencies": {
     "@graphql-mesh/cli": "^0.100.5",
     "@graphql-mesh/openapi": "^0.109.10",
+    "@graphql-mesh/transform-rename": "^0.100.5",
     "graphql": "^16.11.0"
   }
 }

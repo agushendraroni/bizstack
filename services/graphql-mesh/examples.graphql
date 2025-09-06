@@ -1,0 +1,282 @@
+# BizStack GraphQL Examples
+# Access all services through single endpoint: http://localhost:4000/graphql
+
+# ===== AUTHENTICATION =====
+mutation Login {
+  AuthService_login(input: {
+    username: "admin"
+    password: "password123"
+  }) {
+    token
+    refreshToken
+    user {
+      id
+      username
+    }
+  }
+}
+
+# ===== USER MANAGEMENT =====
+query GetUsers {
+  UserService_getUsers {
+    id
+    username
+    email
+    profile {
+      firstName
+      lastName
+    }
+  }
+}
+
+mutation CreateUser {
+  UserService_createUser(input: {
+    username: "newuser"
+    email: "user@example.com"
+    password: "password123"
+  }) {
+    id
+    username
+    email
+  }
+}
+
+# ===== PRODUCT MANAGEMENT =====
+query GetProducts {
+  ProductService_getProducts {
+    id
+    name
+    price
+    stock
+    category {
+      id
+      name
+    }
+  }
+}
+
+query SearchProducts($search: String!) {
+  ProductService_searchProducts(search: $search) {
+    id
+    name
+    price
+    description
+  }
+}
+
+mutation CreateProduct {
+  ProductService_createProduct(input: {
+    name: "iPhone 15"
+    description: "Latest iPhone"
+    price: 999.99
+    stock: 50
+    categoryId: "cat-123"
+  }) {
+    id
+    name
+    price
+    stock
+  }
+}
+
+# ===== CUSTOMER MANAGEMENT =====
+query GetCustomers {
+  CustomerService_getCustomers {
+    id
+    name
+    email
+    phone
+    totalSpent
+    isVip
+    group {
+      name
+      discountPercentage
+    }
+  }
+}
+
+query GetVipCustomers {
+  CustomerService_getVipCustomers {
+    id
+    name
+    totalSpent
+    totalOrders
+  }
+}
+
+# ===== TRANSACTION PROCESSING =====
+query GetOrders {
+  TransactionService_getOrders {
+    id
+    orderNumber
+    status
+    total
+    customer {
+      name
+      email
+    }
+    items {
+      product {
+        name
+        price
+      }
+      quantity
+      subtotal
+    }
+  }
+}
+
+mutation CreateOrder {
+  TransactionService_createOrder(input: {
+    customerId: "cust-123"
+    items: [
+      {
+        productId: "prod-456"
+        quantity: 2
+        price: 999.99
+      }
+    ]
+  }) {
+    id
+    orderNumber
+    total
+    status
+  }
+}
+
+# ===== BUSINESS INTELLIGENCE =====
+query GetDashboard {
+  ReportService_getDashboard {
+    totalSales
+    totalOrders
+    totalCustomers
+    totalProducts
+    salesTrend {
+      date
+      amount
+    }
+    topProducts {
+      name
+      sales
+    }
+  }
+}
+
+query GetSalesReport($startDate: String!, $endDate: String!) {
+  ReportService_getSalesReport(startDate: $startDate, endDate: $endDate) {
+    totalSales
+    totalOrders
+    averageOrderValue
+    dailySales {
+      date
+      amount
+      orders
+    }
+  }
+}
+
+# ===== NOTIFICATIONS =====
+query GetNotifications {
+  NotificationService_getNotifications {
+    id
+    type
+    message
+    status
+    createdAt
+  }
+}
+
+mutation SendNotification {
+  NotificationService_sendNotification(input: {
+    type: "email"
+    recipient: "customer@example.com"
+    subject: "Order Confirmation"
+    message: "Your order has been confirmed"
+  }) {
+    id
+    status
+  }
+}
+
+# ===== FILE MANAGEMENT =====
+query GetFiles {
+  FileStorageService_getFiles {
+    id
+    fileName
+    fileSize
+    category
+    url
+    createdAt
+  }
+}
+
+# ===== COMPLEX QUERIES (Cross-Service) =====
+query GetCompleteCustomerData($customerId: ID!) {
+  # Customer basic info
+  customer: CustomerService_getCustomer(id: $customerId) {
+    id
+    name
+    email
+    phone
+    totalSpent
+    isVip
+  }
+  
+  # Customer orders
+  orders: TransactionService_getOrdersByCustomer(customerId: $customerId) {
+    id
+    orderNumber
+    total
+    status
+    createdAt
+    items {
+      product {
+        name
+        price
+      }
+      quantity
+    }
+  }
+  
+  # Customer notifications
+  notifications: NotificationService_getNotificationsByCustomer(customerId: $customerId) {
+    id
+    type
+    message
+    status
+    createdAt
+  }
+}
+
+query GetCompleteProductData($productId: ID!) {
+  # Product details
+  product: ProductService_getProduct(id: $productId) {
+    id
+    name
+    description
+    price
+    stock
+    category {
+      name
+    }
+  }
+  
+  # Product sales data
+  sales: ReportService_getProductSales(productId: $productId) {
+    totalSold
+    totalRevenue
+    salesTrend {
+      date
+      quantity
+      revenue
+    }
+  }
+  
+  # Product files (images, documents)
+  files: FileStorageService_getFilesByProduct(productId: $productId) {
+    id
+    fileName
+    category
+    url
+  }
+}
