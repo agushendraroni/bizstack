@@ -87,6 +87,45 @@ check_docker() {
     echo -e "${GREEN}✅ Docker and Docker Compose found${NC}"
 }
 
+check_port_conflicts() {
+    echo -e "${YELLOW}🔍 Checking for port conflicts...${NC}"
+    
+    # Define ports used by BizStack
+    local ports=("3000" "4000" "5001" "5002" "5003" "5004" "5005" "5006" "5007" "5008" "5009" "5010" "5678" "5679")
+    local conflicts_found=false
+    
+    for port in "${ports[@]}"; do
+        if netstat -tulpn 2>/dev/null | grep -q ":$port "; then
+            echo -e "${YELLOW}⚠️  Port $port is in use${NC}"
+            
+            # Try to kill processes using the port
+            if command -v fuser &> /dev/null; then
+                echo -e "${YELLOW}🔧 Attempting to free port $port...${NC}"
+                fuser -k ${port}/tcp 2>/dev/null || true
+                sleep 2
+                
+                # Check if port is still in use
+                if netstat -tulpn 2>/dev/null | grep -q ":$port "; then
+                    echo -e "${RED}❌ Could not free port $port${NC}"
+                    conflicts_found=true
+                else
+                    echo -e "${GREEN}✅ Port $port freed${NC}"
+                fi
+            else
+                conflicts_found=true
+            fi
+        fi
+    done
+    
+    if [ "$conflicts_found" = true ]; then
+        echo -e "${YELLOW}⚠️  Some port conflicts detected. Stopping all containers first...${NC}"
+        docker-compose down 2>/dev/null || true
+        sleep 3
+    fi
+    
+    echo -e "${GREEN}✅ Port conflict check completed${NC}"
+}
+
 validate_service() {
     local service=$1
     if [[ "$service" == "all" ]]; then
@@ -242,6 +281,9 @@ main() {
     # Check Docker
     check_docker
     
+    # Check for port conflicts
+    check_port_conflicts
+    
     # Show current status
     echo -e "${BLUE}📊 Current Status:${NC}"
     docker ps --format "table {{.Names}}\t{{.Status}}" | grep BizStack | head -5
@@ -278,6 +320,7 @@ main() {
     echo "  User Service:    http://localhost:5002/"
     echo "  Product Service: http://localhost:5004/"
     echo "  GraphQL Mesh:    http://localhost:4000/"
+    echo "  n8n Workflows:   http://localhost:5679/ (admin/admin123)"
 }
 
 # Execute main function

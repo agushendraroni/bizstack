@@ -9,8 +9,8 @@ const PermissionMatrix = ({
   readOnly = false 
 }) => {
   
-  const handlePermissionToggle = (moduleId, action) => {
-    const permissionKey = `${moduleId}_${action}`;
+  const handlePermissionToggle = (moduleId, permission) => {
+    const permissionKey = permission || moduleId;
     const newPermissions = { ...selectedPermissions };
     
     if (newPermissions[permissionKey]) {
@@ -22,69 +22,49 @@ const PermissionMatrix = ({
     onPermissionChange(newPermissions);
   };
 
-  const handleColumnToggle = (action) => {
+  const handleSelectAll = () => {
     const newPermissions = { ...selectedPermissions };
     const allSelected = modules.every(module => 
-      selectedPermissions[`${module.id}_${action}`]
+      selectedPermissions[module.permission || module.id]
     );
     
     if (allSelected) {
-      // Uncheck all in this column
+      // Uncheck all
       modules.forEach(module => {
-        delete newPermissions[`${module.id}_${action}`];
+        delete newPermissions[module.permission || module.id];
       });
     } else {
-      // Check all in this column
+      // Check all
       modules.forEach(module => {
-        newPermissions[`${module.id}_${action}`] = true;
+        newPermissions[module.permission || module.id] = true;
       });
     }
     
     onPermissionChange(newPermissions);
   };
 
-  const handleRowToggle = (moduleId) => {
-    const newPermissions = { ...selectedPermissions };
-    const actions = ['read', 'write', 'delete'];
-    const allSelected = actions.every(action => 
-      selectedPermissions[`${moduleId}_${action}`]
-    );
-    
-    if (allSelected) {
-      // Uncheck all in this row
-      actions.forEach(action => {
-        delete newPermissions[`${moduleId}_${action}`];
-      });
-    } else {
-      // Check all in this row
-      actions.forEach(action => {
-        newPermissions[`${moduleId}_${action}`] = true;
-      });
-    }
-    
-    onPermissionChange(newPermissions);
+
+
+  const isPermissionSelected = (module) => {
+    return selectedPermissions[module.permission || module.id] || false;
   };
 
-  const isPermissionSelected = (moduleId, action) => {
-    return selectedPermissions[`${moduleId}_${action}`] || false;
+  const isAllSelected = () => {
+    return modules.every(module => isPermissionSelected(module));
   };
 
-  const isColumnAllSelected = (action) => {
-    return modules.every(module => isPermissionSelected(module.id, action));
+  const getSelectedCount = () => {
+    return modules.filter(module => isPermissionSelected(module)).length;
   };
 
-  const isRowAllSelected = (moduleId) => {
-    const actions = ['read', 'write', 'delete'];
-    return actions.every(action => isPermissionSelected(moduleId, action));
-  };
-
-  const getModulePermissionCount = (moduleId) => {
-    const actions = ['read', 'write', 'delete'];
-    return actions.filter(action => isPermissionSelected(moduleId, action)).length;
-  };
-
-  const getColumnCount = (action) => {
-    return modules.filter(module => isPermissionSelected(module.id, action)).length;
+  const getPermissionsByLevel = () => {
+    const levels = {};
+    modules.forEach(module => {
+      const level = module.level || 1;
+      if (!levels[level]) levels[level] = [];
+      levels[level].push(module);
+    });
+    return levels;
   };
 
   return (
@@ -93,91 +73,43 @@ const PermissionMatrix = ({
         <table className="table table-bordered">
           <thead className="thead-light">
             <tr>
-              <th style={{ width: '25%' }}>
-                Module
-                <div className="mt-1">
-                  <small className="text-muted">Click module name to toggle row</small>
+              <th style={{ width: '60%' }}>
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    Menu Permission
+                    <div className="mt-1">
+                      <small className="text-muted">Active menu items from system</small>
+                    </div>
+                  </div>
+                  {!readOnly && (
+                    <div className="custom-control custom-checkbox">
+                      <input
+                        type="checkbox"
+                        className="custom-control-input"
+                        id="select_all"
+                        checked={isAllSelected()}
+                        onChange={handleSelectAll}
+                      />
+                      <label className="custom-control-label" htmlFor="select_all">
+                        <small>Select All</small>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </th>
               <th className="text-center" style={{ width: '20%' }}>
                 <div className="d-flex align-items-center justify-content-center">
-                  <i className="fas fa-eye text-info mr-2"></i>
-                  <span>Read</span>
-                  {!readOnly && (
-                    <div className="ml-2">
-                      <div className="custom-control custom-checkbox">
-                        <input
-                          type="checkbox"
-                          className="custom-control-input"
-                          id="read_all"
-                          checked={isColumnAllSelected('read')}
-                          onChange={() => handleColumnToggle('read')}
-                        />
-                        <label className="custom-control-label" htmlFor="read_all">
-                          <small>All</small>
-                        </label>
-                      </div>
-                    </div>
-                  )}
+                  <i className="fas fa-key text-primary mr-2"></i>
+                  <span>Access</span>
                 </div>
                 <div className="mt-1">
-                  <small className="text-muted">{getColumnCount('read')}/{modules.length}</small>
+                  <small className="text-muted">{getSelectedCount()}/{modules.length}</small>
                 </div>
               </th>
               <th className="text-center" style={{ width: '20%' }}>
-                <div className="d-flex align-items-center justify-content-center">
-                  <i className="fas fa-edit text-warning mr-2"></i>
-                  <span>Write</span>
-                  {!readOnly && (
-                    <div className="ml-2">
-                      <div className="custom-control custom-checkbox">
-                        <input
-                          type="checkbox"
-                          className="custom-control-input"
-                          id="write_all"
-                          checked={isColumnAllSelected('write')}
-                          onChange={() => handleColumnToggle('write')}
-                        />
-                        <label className="custom-control-label" htmlFor="write_all">
-                          <small>All</small>
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                Level
                 <div className="mt-1">
-                  <small className="text-muted">{getColumnCount('write')}/{modules.length}</small>
-                </div>
-              </th>
-              <th className="text-center" style={{ width: '20%' }}>
-                <div className="d-flex align-items-center justify-content-center">
-                  <i className="fas fa-trash text-danger mr-2"></i>
-                  <span>Delete</span>
-                  {!readOnly && (
-                    <div className="ml-2">
-                      <div className="custom-control custom-checkbox">
-                        <input
-                          type="checkbox"
-                          className="custom-control-input"
-                          id="delete_all"
-                          checked={isColumnAllSelected('delete')}
-                          onChange={() => handleColumnToggle('delete')}
-                        />
-                        <label className="custom-control-label" htmlFor="delete_all">
-                          <small>All</small>
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-1">
-                  <small className="text-muted">{getColumnCount('delete')}/{modules.length}</small>
-                </div>
-              </th>
-              <th className="text-center" style={{ width: '15%' }}>
-                Count
-                <div className="mt-1">
-                  <small className="text-muted">Per Module</small>
+                  <small className="text-muted">Menu Level</small>
                 </div>
               </th>
             </tr>
@@ -186,100 +118,52 @@ const PermissionMatrix = ({
             {modules.map(module => (
               <tr key={module.id}>
                 <td>
-                  <div 
-                    className={`d-flex align-items-center ${!readOnly ? 'cursor-pointer' : ''}`}
-                    onClick={!readOnly ? () => handleRowToggle(module.id) : undefined}
-                    style={{ cursor: !readOnly ? 'pointer' : 'default' }}
-                  >
-                    <i className={`fas ${module.icon} mr-2`}></i>
+                  <div className="d-flex align-items-center">
+                    <div style={{ marginLeft: `${(module.level - 1) * 20}px` }}>
+                      <i className={`fas ${module.icon} mr-2 text-primary`}></i>
+                    </div>
                     <div className="flex-grow-1">
                       <strong>{module.name}</strong>
                       {module.description && (
                         <div><small className="text-muted">{module.description}</small></div>
                       )}
+                      {module.permission && (
+                        <div><small className="text-info">Permission: {module.permission}</small></div>
+                      )}
+                      {module.route && (
+                        <div><small className="text-secondary">Route: {module.route}</small></div>
+                      )}
                     </div>
-                    {!readOnly && (
-                      <div className="ml-2">
-                        <div className="custom-control custom-checkbox">
-                          <input
-                            type="checkbox"
-                            className="custom-control-input"
-                            id={`${module.id}_all`}
-                            checked={isRowAllSelected(module.id)}
-                            onChange={() => handleRowToggle(module.id)}
-                          />
-                          <label className="custom-control-label" htmlFor={`${module.id}_all`}>
-                            <small>All</small>
-                          </label>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </td>
                 
-                {/* Read Permission */}
+                {/* Access Permission */}
                 <td className="text-center">
                   <div className="custom-control custom-checkbox">
                     <input
                       type="checkbox"
                       className="custom-control-input"
-                      id={`${module.id}_read`}
-                      checked={isPermissionSelected(module.id, 'read')}
-                      onChange={() => handlePermissionToggle(module.id, 'read')}
+                      id={`${module.id}_access`}
+                      checked={isPermissionSelected(module)}
+                      onChange={() => handlePermissionToggle(module.id, module.permission)}
                       disabled={readOnly}
                     />
                     <label 
                       className="custom-control-label" 
-                      htmlFor={`${module.id}_read`}
+                      htmlFor={`${module.id}_access`}
                     ></label>
                   </div>
                 </td>
                 
-                {/* Write Permission */}
-                <td className="text-center">
-                  <div className="custom-control custom-checkbox">
-                    <input
-                      type="checkbox"
-                      className="custom-control-input"
-                      id={`${module.id}_write`}
-                      checked={isPermissionSelected(module.id, 'write')}
-                      onChange={() => handlePermissionToggle(module.id, 'write')}
-                      disabled={readOnly}
-                    />
-                    <label 
-                      className="custom-control-label" 
-                      htmlFor={`${module.id}_write`}
-                    ></label>
-                  </div>
-                </td>
-                
-                {/* Delete Permission */}
-                <td className="text-center">
-                  <div className="custom-control custom-checkbox">
-                    <input
-                      type="checkbox"
-                      className="custom-control-input"
-                      id={`${module.id}_delete`}
-                      checked={isPermissionSelected(module.id, 'delete')}
-                      onChange={() => handlePermissionToggle(module.id, 'delete')}
-                      disabled={readOnly}
-                    />
-                    <label 
-                      className="custom-control-label" 
-                      htmlFor={`${module.id}_delete`}
-                    ></label>
-                  </div>
-                </td>
-                
-                {/* Permission Count */}
+                {/* Level */}
                 <td className="text-center">
                   <span className={`badge ${
-                    getModulePermissionCount(module.id) === 3 ? 'badge-success' :
-                    getModulePermissionCount(module.id) === 2 ? 'badge-warning' :
-                    getModulePermissionCount(module.id) === 1 ? 'badge-info' :
+                    module.level === 1 ? 'badge-primary' :
+                    module.level === 2 ? 'badge-info' :
+                    module.level === 3 ? 'badge-warning' :
                     'badge-secondary'
                   }`}>
-                    {getModulePermissionCount(module.id)}/3
+                    Level {module.level || 1}
                   </span>
                 </td>
               </tr>
@@ -291,46 +175,35 @@ const PermissionMatrix = ({
       {/* Permission Summary */}
       <div className="mt-3">
         <div className="row">
-          <div className="col-md-3">
+          <div className="col-md-4">
             <div className="text-center">
-              <i className="fas fa-eye text-info fa-2x"></i>
+              <i className="fas fa-key text-primary fa-2x"></i>
               <div className="mt-2">
-                <strong>Read Permissions</strong>
+                <strong>Selected Permissions</strong>
                 <div className="text-muted">
-                  {getColumnCount('read')} of {modules.length} modules
+                  {getSelectedCount()} of {modules.length} menus
                 </div>
               </div>
             </div>
           </div>
-          <div className="col-md-3">
+          <div className="col-md-4">
             <div className="text-center">
-              <i className="fas fa-edit text-warning fa-2x"></i>
+              <i className="fas fa-sitemap text-info fa-2x"></i>
               <div className="mt-2">
-                <strong>Write Permissions</strong>
+                <strong>Menu Levels</strong>
                 <div className="text-muted">
-                  {getColumnCount('write')} of {modules.length} modules
+                  {Object.keys(getPermissionsByLevel()).length} levels available
                 </div>
               </div>
             </div>
           </div>
-          <div className="col-md-3">
+          <div className="col-md-4">
             <div className="text-center">
-              <i className="fas fa-trash text-danger fa-2x"></i>
+              <i className="fas fa-percentage text-success fa-2x"></i>
               <div className="mt-2">
-                <strong>Delete Permissions</strong>
+                <strong>Coverage</strong>
                 <div className="text-muted">
-                  {getColumnCount('delete')} of {modules.length} modules
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-3">
-            <div className="text-center">
-              <i className="fas fa-check-circle text-success fa-2x"></i>
-              <div className="mt-2">
-                <strong>Total Permissions</strong>
-                <div className="text-muted">
-                  {Object.keys(selectedPermissions).length} of {modules.length * 3} total
+                  {modules.length > 0 ? Math.round((getSelectedCount() / modules.length) * 100) : 0}% of available menus
                 </div>
               </div>
             </div>
@@ -352,9 +225,7 @@ const PermissionMatrix = ({
               onClick={() => {
                 const newPermissions = {};
                 modules.forEach(module => {
-                  ['read', 'write', 'delete'].forEach(action => {
-                    newPermissions[`${module.id}_${action}`] = true;
-                  });
+                  newPermissions[module.permission || module.id] = true;
                 });
                 onPermissionChange(newPermissions);
               }}
@@ -375,29 +246,28 @@ const PermissionMatrix = ({
               className="btn btn-sm btn-outline-info mr-2 mb-2"
               onClick={() => {
                 const newPermissions = {};
-                modules.forEach(module => {
-                  newPermissions[`${module.id}_read`] = true;
+                modules.filter(m => m.level === 1).forEach(module => {
+                  newPermissions[module.permission || module.id] = true;
                 });
                 onPermissionChange(newPermissions);
               }}
             >
-              <i className="fas fa-eye mr-1"></i>
-              Read Only
+              <i className="fas fa-layer-group mr-1"></i>
+              Level 1 Only
             </button>
             <button 
               type="button"
               className="btn btn-sm btn-outline-warning mr-2 mb-2"
               onClick={() => {
                 const newPermissions = {};
-                modules.forEach(module => {
-                  newPermissions[`${module.id}_read`] = true;
-                  newPermissions[`${module.id}_write`] = true;
+                modules.filter(m => m.level <= 2).forEach(module => {
+                  newPermissions[module.permission || module.id] = true;
                 });
                 onPermissionChange(newPermissions);
               }}
             >
-              <i className="fas fa-edit mr-1"></i>
-              Read + Write
+              <i className="fas fa-layers mr-1"></i>
+              Level 1 & 2
             </button>
           </div>
         </div>
@@ -411,7 +281,10 @@ PermissionMatrix.propTypes = {
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     description: PropTypes.string,
-    icon: PropTypes.string
+    icon: PropTypes.string,
+    permission: PropTypes.string,
+    route: PropTypes.string,
+    level: PropTypes.number
   })).isRequired,
   permissions: PropTypes.array,
   selectedPermissions: PropTypes.object.isRequired,

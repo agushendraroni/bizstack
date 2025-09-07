@@ -5,7 +5,7 @@ namespace OrganizationService.Services;
 
 public interface ICompanyService
 {
-    Task<ApiResponse<IEnumerable<CompanyDto>>> GetAllCompaniesAsync();
+    Task<ApiResponse<IEnumerable<CompanyDto>>> GetAllCompaniesAsync(int? tenantId = null);
     Task<ApiResponse<CompanyDto>> GetCompanyByIdAsync(Guid id);
     Task<ApiResponse<CompanyDto>> GetCompanyByCodeAsync(string code);
     Task<ApiResponse<CompanyDto>> CreateCompanyAsync(CreateCompanyDto createCompanyDto);

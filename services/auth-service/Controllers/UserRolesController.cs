@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Asp.Versioning;
 using AuthService.Data;
 using AuthService.Models;
 using SharedLibrary.DTOs;
@@ -7,7 +8,9 @@ using SharedLibrary.DTOs;
 namespace AuthService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class UserRolesController : ControllerBase
 {
     private readonly AuthDbContext _context;
@@ -26,7 +29,7 @@ public class UserRolesController : ControllerBase
             .Select(ur => ur.Role)
             .ToListAsync();
         
-        return Ok(ApiResponse<List<Role>>.Success(roles));
+        return Ok(new ApiResponse<List<Role>> { Data = roles, IsSuccess = true, Message = "User roles retrieved successfully" });
     }
 
     [HttpGet("role/{roleId}")]
@@ -38,7 +41,7 @@ public class UserRolesController : ControllerBase
             .Select(ur => ur.User)
             .ToListAsync();
         
-        return Ok(ApiResponse<List<User>>.Success(users));
+        return Ok(new ApiResponse<List<User>> { Data = users, IsSuccess = true, Message = "Role users retrieved successfully" });
     }
 
     [HttpPost("assign")]
@@ -48,7 +51,7 @@ public class UserRolesController : ControllerBase
             .AnyAsync(ur => ur.UserId == dto.UserId && ur.RoleId == dto.RoleId);
         
         if (exists)
-            return BadRequest(ApiResponse<string>.Error("Role already assigned to user"));
+            return BadRequest(new ApiResponse<string> { Data = null, IsSuccess = false, Message = "Role already assigned to user" });
 
         var userRole = new UserRole
         {
@@ -59,7 +62,7 @@ public class UserRolesController : ControllerBase
         _context.UserRoles.Add(userRole);
         await _context.SaveChangesAsync();
         
-        return Ok(ApiResponse<string>.Success("Role assigned to user successfully"));
+        return Ok(new ApiResponse<string> { Data = "Role assigned to user successfully", IsSuccess = true, Message = "Role assigned to user successfully" });
     }
 
     [HttpDelete("remove")]
@@ -69,12 +72,12 @@ public class UserRolesController : ControllerBase
             .FirstOrDefaultAsync(ur => ur.UserId == dto.UserId && ur.RoleId == dto.RoleId);
         
         if (userRole == null)
-            return NotFound(ApiResponse<string>.Error("Role not assigned to user"));
+            return NotFound(new ApiResponse<string> { Data = null, IsSuccess = false, Message = "Role not assigned to user" });
 
         _context.UserRoles.Remove(userRole);
         await _context.SaveChangesAsync();
         
-        return Ok(ApiResponse<string>.Success("Role removed from user successfully"));
+        return Ok(new ApiResponse<string> { Data = "Role removed from user successfully", IsSuccess = true, Message = "Role removed from user successfully" });
     }
 
     [HttpGet]
@@ -85,7 +88,27 @@ public class UserRolesController : ControllerBase
             .Include(ur => ur.Role)
             .ToListAsync();
         
-        return Ok(ApiResponse<List<UserRole>>.Success(userRoles));
+        return Ok(new ApiResponse<List<UserRole>> { Data = userRoles, IsSuccess = true, Message = "All user roles retrieved successfully" });
+    }
+
+    private int? GetTenantId()
+    {
+        if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader) && 
+            int.TryParse(tenantIdHeader.FirstOrDefault(), out var tenantId))
+        {
+            return tenantId;
+        }
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }
 

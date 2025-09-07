@@ -1,20 +1,43 @@
+using SharedLibrary.Middlewares;
+using SharedLibrary.Extensions;
 using Microsoft.EntityFrameworkCore;
 using OrganizationService.Data;
 using OrganizationService.Services;
-using OrganizationService.MappingProfiles;
-using SharedLibrary.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+// Add services to the container.
 builder.Services.AddControllers();
+
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = Asp.Versioning.ApiVersionReader.Combine(
+        new Asp.Versioning.QueryStringApiVersionReader("version"),
+        new Asp.Versioning.HeaderApiVersionReader("X-Version"),
+        new Asp.Versioning.UrlSegmentApiVersionReader()
+    );
+}).AddMvc();
+
 builder.Services.AddEndpointsApiExplorer();
+
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<OrganizationDbContext>();
+
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo 
-    { 
-        Title = "Organization Service API", 
-        Version = "v1" 
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Organization Service API",
+        Version = "v1.0"
+    });
+    c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
+    {
+        Url = "http://organization-service:5003",
+        Description = "Organization Service"
     });
 });
 
@@ -24,7 +47,7 @@ builder.Services.AddDbContext<OrganizationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // AutoMapper
-builder.Services.AddAutoMapper(typeof(OrganizationMappingProfile));
+builder.Services.AddAutoMapper(typeof(Program));
 
 // Services
 builder.Services.AddScoped<ICompanyService, CompanyService>();
@@ -42,26 +65,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.UseSwaggerUI(options =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Organization Service API v1");
-        c.RoutePrefix = string.Empty;
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Organization Service API v1.0");
+        options.RoutePrefix = string.Empty;
     });
 }
 
+// Health Checks
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready");
+
 app.UseCors("AllowAll");
-
-// Health endpoint
-app.MapGet("/health", () => "Organization Service is running");
-
-// Custom middlewares
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseMiddleware<RequestLoggingMiddleware>();
-
+app.UseSecurityHeaders();
+app.UseRouting();
+app.UseTenantMiddleware();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -84,7 +106,7 @@ using (var scope = app.Services.CreateScope())
             context.Database.CanConnect();
         }
     }
-    catch (Exception ex)
+    catch
     {
         // If migration check fails, try to ensure database exists
         context.Database.EnsureCreated();

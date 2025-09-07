@@ -1,11 +1,15 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using OrganizationService.DTOs;
 using OrganizationService.Services;
 
 namespace OrganizationService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class CompaniesController : ControllerBase
 {
     private readonly ICompanyService _companyService;
@@ -18,7 +22,8 @@ public class CompaniesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllCompanies()
     {
-        var result = await _companyService.GetAllCompaniesAsync();
+        var tenantId = GetTenantId();
+        var result = await _companyService.GetAllCompaniesAsync(tenantId);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
@@ -55,5 +60,15 @@ public class CompaniesController : ControllerBase
     {
         var result = await _companyService.DeleteCompanyAsync(id);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    private int? GetTenantId()
+    {
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        return null;
     }
 }

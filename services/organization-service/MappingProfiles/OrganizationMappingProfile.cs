@@ -14,10 +14,6 @@ public class OrganizationMappingProfile : Profile
         CreateMap<UpdateCompanyDto, Company>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-        // Branch mappings
-        CreateMap<Branch, BranchDto>();
-        CreateMap<CreateBranchDto, Branch>();
-        CreateMap<UpdateBranchDto, Branch>()
-            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        // Additional mappings can be added here as needed
     }
 }

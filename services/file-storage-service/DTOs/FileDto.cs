@@ -35,3 +35,6 @@ public class FileUploadResultDto
     public long FileSize { get; set; }
     public string ContentType { get; set; } = string.Empty;
 }
+
+// Alias for compatibility
+public class FileDto : FileRecordDto { }

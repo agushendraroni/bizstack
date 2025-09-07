@@ -17,5 +17,10 @@ namespace SharedLibrary.Middlewares
         {
             return app.UseMiddleware<RequestTimingMiddleware>();
         }
+
+        public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
+        {
+            return app.UseMiddleware<SecurityHeadersMiddleware>();
+        }
     }
 }

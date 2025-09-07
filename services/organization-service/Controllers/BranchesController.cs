@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using OrganizationService.Data;
 using OrganizationService.Models;
@@ -7,7 +9,9 @@ using SharedLibrary.DTOs;
 namespace OrganizationService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class BranchesController : ControllerBase
 {
     private readonly OrganizationDbContext _context;
@@ -109,4 +113,9 @@ public class UpdateBranchDto
     public string? Code { get; set; }
     public string? Name { get; set; }
     public string? Address { get; set; }
+
+    private Guid? GetUserId()
+    {
+        return null;
+    }
 }

@@ -1,0 +1,195 @@
+{
+  "name": "Bulk Import Customers",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bulk-import-customers",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse CSV data and validate customers\nconst csvData = $input.first().json.csvData;\nconst lines = csvData.split('\\n').filter(line => line.trim());\nconst headers = lines[0].split(',').map(h => h.trim());\n\nconst customers = [];\nfor (let i = 1; i < lines.length; i++) {\n  const values = lines[i].split(',').map(v => v.trim());\n  const customer = {};\n  \n  headers.forEach((header, index) => {\n    customer[header] = values[index] || '';\n  });\n  \n  // Validate required fields\n  if (customer.name && customer.email) {\n    // Email validation\n    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n    if (emailRegex.test(customer.email)) {\n      customers.push({\n        name: customer.name,\n        email: customer.email.toLowerCase(),\n        phone: customer.phone || '',\n        address: customer.address || '',\n        customerType: customer.customerType || 'Regular',\n        isActive: customer.isActive !== 'false'\n      });\n    }\n  }\n}\n\nreturn customers.map(customer => ({ json: customer }));"
+      },
+      "id": "parse-validate-csv",
+      "name": "Parse & Validate CSV",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://customer-service:5005/api/Customers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$node[\"Webhook Trigger\"].json[\"headers\"][\"authorization\"]}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{$json.name}}"
+            },
+            {
+              "name": "email",
+              "value": "={{$json.email}}"
+            },
+            {
+              "name": "phone",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "address",
+              "value": "={{$json.address}}"
+            },
+            {
+              "name": "customerType",
+              "value": "={{$json.customerType}}"
+            },
+            {
+              "name": "isActive",
+              "value": "={{$json.isActive}}"
+            }
+          ]
+        }
+      },
+      "id": "create-customer",
+      "name": "Create Customer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Collect and analyze results\nconst results = {\n  success: 0,\n  failed: 0,\n  errors: [],\n  successItems: [],\n  failedItems: [],\n  duplicates: 0\n};\n\nfor (const item of $input.all()) {\n  if (item.json.isSuccess) {\n    results.success++;\n    results.successItems.push({\n      name: item.json.data?.name || 'Unknown',\n      email: item.json.data?.email || 'Unknown',\n      customerType: item.json.data?.customerType || 'Regular'\n    });\n  } else {\n    results.failed++;\n    const errorMsg = item.json.message || 'Unknown error';\n    \n    // Check for duplicate email errors\n    if (errorMsg.toLowerCase().includes('email') && errorMsg.toLowerCase().includes('exist')) {\n      results.duplicates++;\n    }\n    \n    results.errors.push(errorMsg);\n    results.failedItems.push({\n      name: item.json.name || 'Unknown',\n      email: item.json.email || 'Unknown',\n      error: errorMsg\n    });\n  }\n}\n\n// Add summary statistics\nresults.summary = {\n  totalProcessed: results.success + results.failed,\n  successRate: results.success + results.failed > 0 ? \n    Math.round((results.success / (results.success + results.failed)) * 100) : 0,\n  duplicateRate: results.failed > 0 ? \n    Math.round((results.duplicates / results.failed) * 100) : 0\n};\n\nreturn [{ json: results }];"
+      },
+      "id": "analyze-results",
+      "name": "Analyze Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://notification-service:5008/api/Notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userId",
+              "value": "={{$node[\"Webhook Trigger\"].json[\"userId\"]}}"
+            },
+            {
+              "name": "title",
+              "value": "Customer Import Complete"
+            },
+            {
+              "name": "message",
+              "value": "Imported {{$json.success}} customers successfully. {{$json.failed}} failed ({{$json.duplicates}} duplicates)."
+            },
+            {
+              "name": "type",
+              "value": "={{$json.failed > 0 ? 'warning' : 'success'}}"
+            }
+          ]
+        }
+      },
+      "id": "send-completion-notification",
+      "name": "Send Completion Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 480]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate CSV": {
+      "main": [
+        [
+          {
+            "node": "Create Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Customer": {
+      "main": [
+        [
+          {
+            "node": "Analyze Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Results": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Completion Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+}

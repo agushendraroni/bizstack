@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using FileStorageService.Data;
 using FileStorageService.DTOs;
@@ -8,7 +10,9 @@ using SharedLibrary.DTOs;
 namespace FileStorageService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class FilesController : ControllerBase
 {
     private readonly FileStorageDbContext _context;
@@ -165,5 +169,25 @@ public class FilesController : ControllerBase
             .ToListAsync();
 
         return Ok(ApiResponse<object>.Success(categories));
+    }
+
+    private int? GetTenantId()
+    {
+        if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader) && 
+            int.TryParse(tenantIdHeader.FirstOrDefault(), out var tenantId))
+        {
+            return tenantId;
+        }
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }

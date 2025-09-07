@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using TransactionService.DTOs;
 using TransactionService.Services;
@@ -5,7 +6,9 @@ using TransactionService.Services;
 namespace TransactionService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class OrdersController : ControllerBase
 {
     private readonly IOrderService _orderService;
@@ -18,7 +21,7 @@ public class OrdersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllOrders()
     {
-        var result = await _orderService.GetAllOrdersAsync();
+        var result = await _orderService.GetAllOrdersAsync(GetTenantId());
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
@@ -46,7 +49,7 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto createOrderDto)
     {
-        var result = await _orderService.CreateOrderAsync(createOrderDto);
+        var result = await _orderService.CreateOrderAsync(createOrderDto, GetTenantId());
         return result.IsSuccess ? CreatedAtAction(nameof(GetOrderById), new { id = result.Data?.Id }, result) : BadRequest(result);
     }
 
@@ -69,5 +72,25 @@ public class OrdersController : ControllerBase
     {
         var result = await _orderService.ConfirmOrderAsync(id);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    private int? GetTenantId()
+    {
+        if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader) && 
+            int.TryParse(tenantIdHeader.FirstOrDefault(), out var tenantId))
+        {
+            return tenantId;
+        }
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }

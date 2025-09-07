@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { withRouter } from "react-router-dom";
 import { Container, Row, Col, Card, CardHeader, CardBody, Button, Form, FormInput, Alert } from "shards-react";
+import AuthAPI from "../api/auth/authApi";
 
-const Login = () => {
-  const { companyCode } = useParams();
-  const history = useHistory();
+const Login = ({ history, match }) => {
+  const { companyCode } = match.params;
   
   // State management
   const [loading, setLoading] = useState(false);
@@ -60,26 +60,18 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Mock authentication - in real app, call API
-      if (formData.username === 'admin' && formData.password === 'admin123') {
-        // Store user data with normalized company code
-        const userData = {
-          id: 'admin-blitz-001',
-          username: 'admin',
-          firstName: 'System',
-          lastName: 'Administrator',
-          email: 'admin@blitz.co.id',
-          companyCode: companyInfo.code, // Use normalized uppercase code
-          companyName: companyInfo.name
-        };
-        
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('authToken', 'mock-jwt-token');
-        
-        // Redirect to company dashboard with normalized code
-        history.push(`/${companyInfo.code}/dashboard`);
+      const loginData = {
+        ...formData,
+        companyCode: companyCode
+      };
+      const result = await AuthAPI.login(loginData);
+      
+      if (result.success) {
+        // Store company code and redirect to company dashboard
+        localStorage.setItem('companyCode', companyCode.toUpperCase());
+        history.push(`/${companyCode.toUpperCase()}/dashboard`);
       } else {
-        setError("Invalid username or password");
+        setError(result.message || "Invalid username or password");
       }
     } catch (err) {
       setError("Login failed. Please try again.");
@@ -234,4 +226,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default withRouter(Login);

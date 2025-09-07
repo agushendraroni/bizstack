@@ -1,0 +1,236 @@
+{
+  "name": "Bulk Import Products",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bulk-import-products",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse CSV data from request\nconst csvData = $input.first().json.csvData;\nconst lines = csvData.split('\\n').filter(line => line.trim());\nconst headers = lines[0].split(',').map(h => h.trim());\n\nconst products = [];\nfor (let i = 1; i < lines.length; i++) {\n  const values = lines[i].split(',').map(v => v.trim());\n  const product = {};\n  \n  headers.forEach((header, index) => {\n    product[header] = values[index] || '';\n  });\n  \n  // Validate and format product data\n  if (product.name && product.code && product.price) {\n    products.push({\n      name: product.name,\n      code: product.code,\n      description: product.description || '',\n      price: parseFloat(product.price) || 0,\n      stock: parseInt(product.stock) || 0,\n      minStock: parseInt(product.minStock) || 5,\n      isActive: product.isActive !== 'false'\n    });\n  }\n}\n\nreturn products.map(product => ({ json: product }));"
+      },
+      "id": "parse-csv",
+      "name": "Parse CSV Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://product-service:5004/api/Products",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$node[\"Webhook Trigger\"].json[\"headers\"][\"authorization\"]}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{$json.name}}"
+            },
+            {
+              "name": "code", 
+              "value": "={{$json.code}}"
+            },
+            {
+              "name": "description",
+              "value": "={{$json.description}}"
+            },
+            {
+              "name": "price",
+              "value": "={{$json.price}}"
+            },
+            {
+              "name": "stock",
+              "value": "={{$json.stock}}"
+            },
+            {
+              "name": "minStock",
+              "value": "={{$json.minStock}}"
+            },
+            {
+              "name": "isActive",
+              "value": "={{$json.isActive}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "create-product",
+      "name": "Create Product",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Collect results from all product creation attempts\nconst results = {\n  success: 0,\n  failed: 0,\n  errors: [],\n  successItems: [],\n  failedItems: []\n};\n\nfor (const item of $input.all()) {\n  if (item.json.isSuccess) {\n    results.success++;\n    results.successItems.push({\n      name: item.json.data?.name || 'Unknown',\n      code: item.json.data?.code || 'Unknown'\n    });\n  } else {\n    results.failed++;\n    results.errors.push(item.json.message || 'Unknown error');\n    results.failedItems.push({\n      name: item.json.name || 'Unknown',\n      error: item.json.message || 'Unknown error'\n    });\n  }\n}\n\nreturn [{ json: results }];"
+      },
+      "id": "collect-results",
+      "name": "Collect Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.failed}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-failures",
+      "name": "Check Failures",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 480]
+    },
+    {
+      "parameters": {
+        "url": "http://notification-service:5008/api/Notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "userId",
+              "value": "={{$node[\"Webhook Trigger\"].json[\"userId\"]}}"
+            },
+            {
+              "name": "title",
+              "value": "Bulk Import Failed"
+            },
+            {
+              "name": "message",
+              "value": "{{$json.failed}} products failed to import. Check logs for details."
+            },
+            {
+              "name": "type",
+              "value": "error"
+            }
+          ]
+        }
+      },
+      "id": "send-failure-notification",
+      "name": "Send Failure Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1120, 580]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV Data": {
+      "main": [
+        [
+          {
+            "node": "Create Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Product": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Results": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Failures": {
+      "main": [
+        [
+          {
+            "node": "Send Failure Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+}

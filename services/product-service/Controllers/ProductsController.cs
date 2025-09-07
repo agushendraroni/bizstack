@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using ProductService.DTOs;
 using ProductService.Services;
@@ -5,7 +6,9 @@ using ProductService.Services;
 namespace ProductService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
@@ -18,7 +21,8 @@ public class ProductsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllProducts()
     {
-        var result = await _productService.GetAllProductsAsync();
+        var tenantId = GetTenantId();
+        var result = await _productService.GetAllProductsAsync(tenantId);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
@@ -53,7 +57,8 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto createProductDto)
     {
-        var result = await _productService.CreateProductAsync(createProductDto);
+        var tenantId = GetTenantId();
+        var result = await _productService.CreateProductAsync(createProductDto, tenantId);
         return result.IsSuccess ? CreatedAtAction(nameof(GetProductById), new { id = result.Data?.Id }, result) : BadRequest(result);
     }
 
@@ -76,6 +81,11 @@ public class ProductsController : ControllerBase
     {
         var result = await _productService.UpdateStockAsync(id, updateStockDto.Quantity);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    private int? GetTenantId()
+    {
+        return null;
     }
 }
 

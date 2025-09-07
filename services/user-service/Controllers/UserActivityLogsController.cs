@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using UserService.Data;
 using UserService.Models;
@@ -7,7 +9,8 @@ using SharedLibrary.DTOs;
 namespace UserService.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
 public class UserActivityLogsController : ControllerBase
 {
     private readonly UserDbContext _context;
@@ -26,7 +29,7 @@ public class UserActivityLogsController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
         
-        return Ok(ApiResponse<List<UserActivityLog>>.Success(logs));
+        return Ok(new ApiResponse<List<UserActivityLog>> { Data = logs, IsSuccess = true });
     }
 
     [HttpGet("user/{userId}")]
@@ -39,7 +42,7 @@ public class UserActivityLogsController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
         
-        return Ok(ApiResponse<List<UserActivityLog>>.Success(logs));
+        return Ok(new ApiResponse<List<UserActivityLog>> { Data = logs, IsSuccess = true });
     }
 
     [HttpGet("{id}")]
@@ -47,9 +50,9 @@ public class UserActivityLogsController : ControllerBase
     {
         var log = await _context.UserActivityLogs.FindAsync(id);
         if (log == null)
-            return NotFound(ApiResponse<UserActivityLog>.Error("Activity log not found"));
+            return NotFound(new ApiResponse<UserActivityLog> { Data = null, IsSuccess = false, Message = "Activity log not found" });
         
-        return Ok(ApiResponse<UserActivityLog>.Success(log));
+        return Ok(new ApiResponse<UserActivityLog> { Data = log, IsSuccess = true });
     }
 
     [HttpPost]
@@ -67,7 +70,7 @@ public class UserActivityLogsController : ControllerBase
         _context.UserActivityLogs.Add(log);
         await _context.SaveChangesAsync();
         
-        return CreatedAtAction(nameof(GetActivityLog), new { id = log.Id }, ApiResponse<UserActivityLog>.Success(log));
+        return CreatedAtAction(nameof(GetActivityLog), new { id = log.Id }, new ApiResponse<UserActivityLog> { Data = log, IsSuccess = true });
     }
 
     [HttpDelete("{id}")]
@@ -75,12 +78,12 @@ public class UserActivityLogsController : ControllerBase
     {
         var log = await _context.UserActivityLogs.FindAsync(id);
         if (log == null)
-            return NotFound(ApiResponse<UserActivityLog>.Error("Activity log not found"));
+            return NotFound(new ApiResponse<UserActivityLog> { Data = null, IsSuccess = false, Message = "Activity log not found" });
 
         _context.UserActivityLogs.Remove(log);
         await _context.SaveChangesAsync();
         
-        return Ok(ApiResponse<string>.Success("Activity log deleted successfully"));
+        return Ok(new ApiResponse<string> { Data = "Activity log deleted successfully", IsSuccess = true });
     }
 
     [HttpGet("user/{userId}/activities/{activity}")]
@@ -91,7 +94,17 @@ public class UserActivityLogsController : ControllerBase
             .OrderByDescending(log => log.CreatedAt)
             .ToListAsync();
         
-        return Ok(ApiResponse<List<UserActivityLog>>.Success(logs));
+        return Ok(new ApiResponse<List<UserActivityLog>> { Data = logs, IsSuccess = true });
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }
 

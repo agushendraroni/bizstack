@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using OrganizationService.Data;
 using OrganizationService.Models;
@@ -7,7 +9,9 @@ using SharedLibrary.DTOs;
 namespace OrganizationService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class JobTitlesController : ControllerBase
 {
     private readonly OrganizationDbContext _context;
@@ -20,7 +24,13 @@ public class JobTitlesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetJobTitles()
     {
-        var jobTitles = await _context.JobTitles.ToListAsync();
+        var tenantId = GetTenantId();
+        var query = _context.JobTitles.AsQueryable();
+        
+        if (tenantId.HasValue)
+            query = query.Where(jt => jt.TenantId == tenantId.Value);
+            
+        var jobTitles = await query.ToListAsync();
         return Ok(ApiResponse<List<JobTitle>>.Success(jobTitles));
     }
 
@@ -37,10 +47,12 @@ public class JobTitlesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateJobTitle([FromBody] CreateJobTitleDto dto)
     {
+        var tenantId = GetTenantId();
         var jobTitle = new JobTitle
         {
             Title = dto.Title,
-            Description = dto.Description
+            Description = dto.Description,
+            TenantId = tenantId
         };
 
         _context.JobTitles.Add(jobTitle);
@@ -85,6 +97,11 @@ public class JobTitlesController : ControllerBase
         
         return Ok(ApiResponse<List<JobTitle>>.Success(jobTitles));
     }
+
+    private int? GetTenantId()
+    {
+        return null;
+    }
 }
 
 public class CreateJobTitleDto
@@ -97,4 +114,9 @@ public class UpdateJobTitleDto
 {
     public string? Title { get; set; }
     public string? Description { get; set; }
+
+    private Guid? GetUserId()
+    {
+        return null;
+    }
 }

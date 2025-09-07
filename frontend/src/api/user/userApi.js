@@ -1,42 +1,56 @@
-// User API Service with Pagination
-import { apiClients, API_ENDPOINTS } from '../../services/api/apiConfig';
+// User API Service using GraphQL
+import { graphqlClient } from '../../services/api/graphqlClient';
+import { GET_ALL_USERS_QUERY } from '../../services/api/queries';
 
 class UserAPI {
   constructor() {
-    this.client = apiClients.user;
+    this.client = graphqlClient;
   }
 
-  // Get users with pagination
+  // Get all users with pagination
   async getUsers(page = 1, pageSize = 10, search = '') {
     try {
-      let endpoint = `${API_ENDPOINTS.user.list}?page=${page}&pageSize=${pageSize}`;
-      if (search) {
-        endpoint += `&search=${encodeURIComponent(search)}`;
+      const response = await this.client.query(GET_ALL_USERS_QUERY);
+      const userData = response.UserService_getUserProfilesControllerGetProfiles;
+      
+      if (userData.isSuccess) {
+        let users = userData.data || [];
+        
+        // Apply search filter if provided
+        if (search) {
+          users = users.filter(user => 
+            (user.fullName && user.fullName.toLowerCase().includes(search.toLowerCase())) ||
+            (user.email && user.email.toLowerCase().includes(search.toLowerCase()))
+          );
+        }
+        
+        // Apply pagination
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedUsers = users.slice(startIndex, endIndex);
+        
+        return {
+          success: true,
+          data: paginatedUsers,
+          pagination: {
+            page,
+            pageSize,
+            total: users.length,
+            totalPages: Math.ceil(users.length / pageSize)
+          },
+          message: userData.message
+        };
       }
       
-      const response = await this.client.get(endpoint);
-      
       return {
-        success: response.isSuccess || true,
-        data: response.data || [],
-        pagination: {
-          currentPage: page,
-          pageSize: pageSize,
-          totalItems: response.totalCount || (response.data && response.data.length) || 0,
-          totalPages: Math.ceil((response.totalCount || (response.data && response.data.length) || 0) / pageSize)
-        },
-        message: response.message
+        success: false,
+        data: [],
+        message: userData.message || 'Failed to fetch users'
       };
     } catch (error) {
       return {
         success: false,
         data: [],
-        pagination: {
-          currentPage: 1,
-          pageSize: pageSize,
-          totalItems: 0,
-          totalPages: 0
-        },
         message: error.message || 'Failed to fetch users'
       };
     }
@@ -45,12 +59,31 @@ class UserAPI {
   // Get user by ID
   async getUserById(id) {
     try {
-      const response = await this.client.get(API_ENDPOINTS.user.getById(id));
+      const response = await this.client.query(GET_ALL_USERS_QUERY);
+      const userData = response.UserService_getUserProfilesControllerGetProfiles;
+      
+      if (userData.isSuccess) {
+        const user = userData.data && userData.data.find(u => u.id === id || u.userId === id);
+        
+        if (user) {
+          return {
+            success: true,
+            data: user,
+            message: 'User retrieved successfully'
+          };
+        }
+        
+        return {
+          success: false,
+          data: null,
+          message: 'User not found'
+        };
+      }
       
       return {
-        success: response.isSuccess || true,
-        data: response.data,
-        message: response.message
+        success: false,
+        data: null,
+        message: userData.message || 'Failed to fetch user'
       };
     } catch (error) {
       return {
@@ -61,62 +94,28 @@ class UserAPI {
     }
   }
 
-  // Create new user
+  // Create user (placeholder)
   async createUser(userData) {
-    try {
-      const response = await this.client.post(API_ENDPOINTS.user.create, userData);
-      
-      return {
-        success: response.isSuccess || true,
-        data: response.data,
-        message: response.message || (response.isSuccess ? 'User created successfully' : 'Failed to create user')
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'Failed to create user'
-      };
-    }
+    return {
+      success: false,
+      message: 'User creation not implemented yet'
+    };
   }
 
-  // Update user
+  // Update user (placeholder)
   async updateUser(id, userData) {
-    try {
-      const response = await this.client.put(API_ENDPOINTS.user.update(id), userData);
-      
-      return {
-        success: response.isSuccess || true,
-        data: response.data,
-        message: response.message || (response.isSuccess ? 'User updated successfully' : 'Failed to update user')
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'Failed to update user'
-      };
-    }
+    return {
+      success: false,
+      message: 'User update not implemented yet'
+    };
   }
 
-  // Delete user
+  // Delete user (placeholder)
   async deleteUser(id) {
-    try {
-      const response = await this.client.delete(API_ENDPOINTS.user.delete(id));
-      
-      return {
-        success: response.isSuccess || true,
-        message: response.message || (response.isSuccess ? 'User deleted successfully' : 'Failed to delete user')
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'Failed to delete user'
-      };
-    }
-  }
-
-  // Search users
-  async searchUsers(query, page = 1, pageSize = 10) {
-    return this.getUsers(page, pageSize, query);
+    return {
+      success: false,
+      message: 'User deletion not implemented yet'
+    };
   }
 }
 

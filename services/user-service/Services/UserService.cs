@@ -18,11 +18,15 @@ public class UserService : IUserService
         _mapper = mapper;
     }
 
-    public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllUsersAsync()
+    public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllUsersAsync(int? tenantId = null)
     {
         try
         {
-            var users = await _context.Users.ToListAsync();
+            var query = _context.Users.Where(u => !u.IsDeleted).AsQueryable();
+            if (tenantId.HasValue)
+                query = query.Where(u => u.TenantId == tenantId.Value);
+                
+            var users = await query.ToListAsync();
             var userDtos = _mapper.Map<IEnumerable<UserDto>>(users);
             return ApiResponse<IEnumerable<UserDto>>.Success(userDtos);
         }
@@ -66,13 +70,15 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserDto createUserDto)
+    public async Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserDto createUserDto, int? tenantId = null, Guid? userId = null)
     {
         try
         {
             var user = _mapper.Map<User>(createUserDto);
             user.Id = Guid.NewGuid();
             user.CreatedAt = DateTime.UtcNow;
+            user.TenantId = tenantId;
+            user.CreatedBy = userId?.ToString();
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -86,16 +92,21 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<ApiResponse<UserDto>> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto)
+    public async Task<ApiResponse<UserDto>> UpdateUserAsync(Guid id, UpdateUserDto updateUserDto, int? tenantId = null, Guid? userId = null)
     {
         try
         {
-            var user = await _context.Users.FindAsync(id);
+            var query = _context.Users.Where(x => !x.IsDeleted).AsQueryable();
+            if (tenantId.HasValue)
+                query = query.Where(u => u.TenantId == tenantId.Value);
+                
+            var user = await query.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
                 return ApiResponse<UserDto>.Error("User not found");
 
             _mapper.Map(updateUserDto, user);
             user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = userId?.ToString();
 
             await _context.SaveChangesAsync();
 
@@ -108,15 +119,23 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<ApiResponse<bool>> DeleteUserAsync(Guid id)
+    public async Task<ApiResponse<bool>> DeleteUserAsync(Guid id, int? tenantId = null, Guid? userId = null)
     {
         try
         {
-            var user = await _context.Users.FindAsync(id);
+            var query = _context.Users.Where(x => !x.IsDeleted).AsQueryable();
+            if (tenantId.HasValue)
+                query = query.Where(u => u.TenantId == tenantId.Value);
+                
+            var user = await query.FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
                 return ApiResponse<bool>.Error("User not found");
 
-            _context.Users.Remove(user);
+            // Soft delete with audit trail
+            user.IsDeleted = true;
+            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedBy = userId?.ToString();
+            
             await _context.SaveChangesAsync();
 
             return ApiResponse<bool>.Success(true);
@@ -131,7 +150,7 @@ public class UserService : IUserService
     {
         try
         {
-            var users = await _context.Users
+            var users = await _context.Users.Where(x => !x.IsDeleted)
                 .Where(u => u.OrganizationId == organizationId)
                 .ToListAsync();
 

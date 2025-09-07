@@ -1,9 +1,46 @@
-export default function() {
+import { menuApi } from '../api';
+
+// Dynamic menu loader using GraphQL API
+export default async function() {
+  // Get company code from URL or localStorage
+  const getCompanyCode = () => {
+    const path = window.location.pathname;
+    const match = path.match(/^\/([^/]+)/);
+    if (match && match[1] !== 'company' && match[1] !== 'login') {
+      return match[1];
+    }
+    return localStorage.getItem('companyCode') || 'demo';
+  };
+  
+  const companyCode = getCompanyCode();
+  
+  // Try to load menu from API
+  try {
+    const menuResult = await menuApi.getMenuTree('main');
+    if (menuResult.success && menuResult.data.length > 0) {
+      // Transform API menu to sidebar format
+      return menuResult.data.map(item => ({
+        title: item.title,
+        to: item.to ? `/${companyCode}${item.to}` : '#',
+        htmlBefore: `<i class="${item.icon || 'fas fa-circle'}"></i>`,
+        htmlAfter: '',
+        items: item.items ? item.items.map(subItem => ({
+          title: subItem.title,
+          to: `/${companyCode}${subItem.to}`,
+          htmlBefore: `<i class="fas fa-angle-right"></i>`
+        })) : undefined
+      }));
+    }
+  } catch (error) {
+    console.warn('Failed to load menu from API, using fallback:', error);
+  }
+  
+  // Fallback static menu
   return [
     // === BUSINESS SYSTEM ===
     {
       title: "Business Dashboard",
-      to: "/dashboard",
+      to: `/${companyCode}/dashboard`,
       htmlBefore: '<i class="fas fa-tachometer-alt"></i>',
       htmlAfter: ""
     },
@@ -17,27 +54,23 @@ export default function() {
         {
           title: "User Management",
           htmlBefore: '<i class="fas fa-users"></i>',
-          to: "/users",
+          to: `/${companyCode}/users`,
         },
         {
           title: "Role Management",
           htmlBefore: '<i class="fas fa-shield-alt"></i>',
-          to: "/roles",
+          to: `/${companyCode}/roles`,
         },
-        {
-          title: "Companies",
-          htmlBefore: '<i class="fas fa-building"></i>',
-          to: "/organizations",
-        },
+
         {
           title: "Departments",
           htmlBefore: '<i class="fas fa-sitemap"></i>',
-          to: "/departments",
+          to: `/${companyCode}/departments`,
         },
         {
           title: "Positions",
-          htmlBefore: '<i class="fas fa-user-tie"></i>',
-          to: "/positions",
+          htmlBefore: '<i class="fas fa-briefcase"></i>',
+          to: `/${companyCode}/positions`,
         }
       ]
     },
@@ -51,60 +84,59 @@ export default function() {
         {
           title: "Company Info",
           htmlBefore: '<i class="fas fa-building"></i>',
-          to: "/company",
+          to: `/${companyCode}/company-profile`,
         },
         {
           title: "Menu Tree",
           htmlBefore: '<i class="fas fa-sitemap"></i>',
-          to: "/menu-tree",
+          to: `/${companyCode}/menu-tree`,
         }
       ]
     },
     
-    // === DIVIDER ===
+    // === LEGACY SYSTEM (EXPANDABLE) ===
     {
       title: "Legacy System",
-      htmlBefore: '<i class="fas fa-folder"></i>',
+      htmlBefore: '<i class="fas fa-archive"></i>',
       to: "#",
-      htmlAfter: '<small class="text-muted ml-2">(Original Template)</small>'
-    },
-    
-    // === LEGACY SHARDS TEMPLATE ===
-    {
-      title: "Blog Dashboard",
-      to: "/blog-overview",
-      htmlBefore: '<i class="fas fa-edit"></i>',
-      htmlAfter: ""
-    },
-    {
-      title: "Blog Posts",
-      htmlBefore: '<i class="fas fa-list"></i>',
-      to: "/blog-posts",
-    },
-    {
-      title: "Add New Post",
-      htmlBefore: '<i class="fas fa-plus"></i>',
-      to: "/add-new-post",
-    },
-    {
-      title: "Forms & Components",
-      htmlBefore: '<i class="fas fa-th"></i>',
-      to: "/components-overview",
-    },
-    {
-      title: "Tables",
-      htmlBefore: '<i class="fas fa-table"></i>',
-      to: "/tables",
-    },
-    {
-      title: "User Profile",
-      htmlBefore: '<i class="fas fa-user"></i>',
-      to: "/user-profile-lite",
-    },
-    {
-      title: "Errors",
-      htmlBefore: '<i class="fas fa-exclamation-triangle"></i>',
-      to: "/errors",
+      htmlAfter: '<small class="text-muted ml-2">(Original Template)</small>',
+      items: [
+        {
+          title: "Blog Dashboard",
+          htmlBefore: '<i class="fas fa-edit"></i>',
+          to: `/${companyCode}/legacy-system/blog-dashboard`,
+        },
+        {
+          title: "Blog Posts",
+          htmlBefore: '<i class="fas fa-list"></i>',
+          to: `/${companyCode}/legacy-system/blog-posts`,
+        },
+        {
+          title: "Add New Post",
+          htmlBefore: '<i class="fas fa-plus"></i>',
+          to: `/${companyCode}/legacy-system/add-new-post`,
+        },
+        {
+          title: "Forms & Components",
+          htmlBefore: '<i class="fas fa-th"></i>',
+          to: `/${companyCode}/legacy-system/forms-components`,
+        },
+        {
+          title: "Tables",
+          htmlBefore: '<i class="fas fa-table"></i>',
+          to: `/${companyCode}/legacy-system/tables`,
+        },
+        {
+          title: "User Profile",
+          htmlBefore: '<i class="fas fa-user"></i>',
+          to: `/${companyCode}/legacy-system/user-profile`,
+        },
+        {
+          title: "Errors",
+          htmlBefore: '<i class="fas fa-exclamation-triangle"></i>',
+          to: `/${companyCode}/legacy-system/errors`,
+        }
+      ]
     }
   ];
 }

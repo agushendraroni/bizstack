@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using CustomerService.Data;
 using CustomerService.DTOs;
@@ -8,7 +10,8 @@ using SharedLibrary.DTOs;
 namespace CustomerService.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
 public class CustomerGroupsController : ControllerBase
 {
     private readonly CustomerDbContext _context;
@@ -139,5 +142,25 @@ public class CustomerGroupsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(ApiResponse<string>.Success("Customer group deleted successfully"));
+    }
+
+    private int? GetTenantId()
+    {
+        if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader) && 
+            int.TryParse(tenantIdHeader.FirstOrDefault(), out var tenantId))
+        {
+            return tenantId;
+        }
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }

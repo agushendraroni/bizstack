@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using OrganizationService.Data;
 using OrganizationService.Models;
@@ -7,7 +9,9 @@ using SharedLibrary.DTOs;
 namespace OrganizationService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class DivisionsController : ControllerBase
 {
     private readonly OrganizationDbContext _context;
@@ -20,9 +24,13 @@ public class DivisionsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetDivisions()
     {
-        var divisions = await _context.Divisions
-            .Include(d => d.Company)
-            .ToListAsync();
+        var tenantId = GetTenantId();
+        var query = _context.Divisions.Include(d => d.Company).AsQueryable();
+        
+        if (tenantId.HasValue)
+            query = query.Where(d => d.TenantId == tenantId.Value);
+            
+        var divisions = await query.ToListAsync();
         return Ok(ApiResponse<List<Division>>.Success(divisions));
     }
 
@@ -53,10 +61,12 @@ public class DivisionsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateDivision([FromBody] CreateDivisionDto dto)
     {
+        var tenantId = GetTenantId();
         var division = new Division
         {
             Name = dto.Name,
-            CompanyId = dto.CompanyId
+            CompanyId = dto.CompanyId,
+            TenantId = tenantId
         };
 
         _context.Divisions.Add(division);
@@ -90,6 +100,11 @@ public class DivisionsController : ControllerBase
         
         return Ok(ApiResponse<string>.Success("Division deleted successfully"));
     }
+
+    private int? GetTenantId()
+    {
+        return null;
+    }
 }
 
 public class CreateDivisionDto
@@ -101,4 +116,9 @@ public class CreateDivisionDto
 public class UpdateDivisionDto
 {
     public string? Name { get; set; }
+
+    private Guid? GetUserId()
+    {
+        return null;
+    }
 }

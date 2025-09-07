@@ -11,6 +11,9 @@ CREATE DATABASE transaction_db;
 CREATE DATABASE notification_db;
 CREATE DATABASE filestorage_db;
 CREATE DATABASE n8n_db;
+CREATE DATABASE settings_db;
+
+
 
 -- Grant permissions to bizstack_admin user
 GRANT ALL PRIVILEGES ON DATABASE auth_db TO bizstack_admin;
@@ -22,6 +25,7 @@ GRANT ALL PRIVILEGES ON DATABASE transaction_db TO bizstack_admin;
 GRANT ALL PRIVILEGES ON DATABASE notification_db TO bizstack_admin;
 GRANT ALL PRIVILEGES ON DATABASE filestorage_db TO bizstack_admin;
 GRANT ALL PRIVILEGES ON DATABASE n8n_db TO bizstack_admin;
+GRANT ALL PRIVILEGES ON DATABASE settings_db TO bizstack_admin;
 
 -- Create extensions if needed
 \c auth_db;
@@ -49,4 +53,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 \c n8n_db;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+\c settings_db;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

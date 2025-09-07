@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using CustomerService.DTOs;
 using CustomerService.Services;
@@ -5,7 +6,9 @@ using CustomerService.Services;
 namespace CustomerService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class CustomersController : ControllerBase
 {
     private readonly ICustomerService _customerService;
@@ -18,7 +21,7 @@ public class CustomersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllCustomers()
     {
-        var result = await _customerService.GetAllCustomersAsync();
+        var result = await _customerService.GetAllCustomersAsync(GetTenantId());
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
@@ -53,7 +56,7 @@ public class CustomersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerDto createCustomerDto)
     {
-        var result = await _customerService.CreateCustomerAsync(createCustomerDto);
+        var result = await _customerService.CreateCustomerAsync(createCustomerDto, GetTenantId());
         return result.IsSuccess ? CreatedAtAction(nameof(GetCustomerById), new { id = result.Data?.Id }, result) : BadRequest(result);
     }
 
@@ -76,6 +79,26 @@ public class CustomersController : ControllerBase
     {
         var result = await _customerService.UpdateCustomerStatsAsync(id, updateStatsDto.OrderAmount);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    private int? GetTenantId()
+    {
+        if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader) && 
+            int.TryParse(tenantIdHeader.FirstOrDefault(), out var tenantId))
+        {
+            return tenantId;
+        }
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }
 

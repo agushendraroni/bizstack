@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Card, CardBody, Form, FormInput, Button, Alert } from "shards-react";
-import { useAuth } from "../../context/auth/AuthContext";
+import { authApi } from "../../api";
 
 const Login = () => {
-  const { login, loading, error } = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     password: ""
   });
   const [localError, setLocalError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -29,12 +29,12 @@ const Login = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      const result = await login(formData);
+      const result = await authApi.login(formData);
       
       if (result.success) {
         setSuccess("Login successful! Redirecting...");
-        // Redirect will be handled by route protection
         setTimeout(() => {
           window.location.href = "/dashboard";
         }, 1000);
@@ -43,6 +43,8 @@ const Login = () => {
       }
     } catch (err) {
       setLocalError("An error occurred during login");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,9 +59,9 @@ const Login = () => {
                 <p className="text-muted">Sign in to your account</p>
               </div>
 
-              {(error || localError) && (
+              {localError && (
                 <Alert theme="danger" className="mb-3">
-                  {error || localError}
+                  {localError}
                 </Alert>
               )}
 
@@ -109,7 +111,7 @@ const Login = () => {
 
               <div className="text-center mt-3">
                 <small className="text-muted">
-                  Demo credentials: admin / password123
+                  Demo credentials: admin123 / admin123
                 </small>
               </div>
             </CardBody>

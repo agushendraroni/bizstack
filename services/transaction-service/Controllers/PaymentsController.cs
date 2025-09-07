@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using TransactionService.Data;
 using TransactionService.DTOs;
@@ -8,7 +10,8 @@ using SharedLibrary.DTOs;
 namespace TransactionService.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
 public class PaymentsController : ControllerBase
 {
     private readonly TransactionDbContext _context;
@@ -151,5 +154,25 @@ public class PaymentsController : ControllerBase
     private string GeneratePaymentNumber()
     {
         return $"PAY-{DateTime.Now:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
+    }
+
+    private int? GetTenantId()
+    {
+        if (Request.Headers.TryGetValue("X-Tenant-Id", out var tenantIdHeader) && 
+            int.TryParse(tenantIdHeader.FirstOrDefault(), out var tenantId))
+        {
+            return tenantId;
+        }
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }

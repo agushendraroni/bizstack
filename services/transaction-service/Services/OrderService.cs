@@ -18,9 +18,9 @@ public class OrderService : IOrderService
         _mapper = mapper;
     }
 
-    public async Task<ApiResponse<List<OrderDto>>> GetAllOrdersAsync()
+    public async Task<ApiResponse<List<OrderDto>>> GetAllOrdersAsync(int? tenantId = null)
     {
-        var orders = await _context.Orders
+        var orders = await _context.Orders.Where(x => !x.IsDeleted)
             .Include(o => o.OrderItems)
             .Include(o => o.Payments)
             .Where(o => o.IsActive)
@@ -33,7 +33,7 @@ public class OrderService : IOrderService
 
     public async Task<ApiResponse<OrderDto>> GetOrderByIdAsync(Guid id)
     {
-        var order = await _context.Orders
+        var order = await _context.Orders.Where(x => !x.IsDeleted)
             .Include(o => o.OrderItems)
             .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -47,7 +47,7 @@ public class OrderService : IOrderService
 
     public async Task<ApiResponse<List<OrderDto>>> GetOrdersByCustomerAsync(Guid customerId)
     {
-        var orders = await _context.Orders
+        var orders = await _context.Orders.Where(x => !x.IsDeleted)
             .Include(o => o.OrderItems)
             .Include(o => o.Payments)
             .Where(o => o.CustomerId == customerId && o.IsActive)
@@ -60,7 +60,7 @@ public class OrderService : IOrderService
 
     public async Task<ApiResponse<List<OrderDto>>> GetOrdersByStatusAsync(string status)
     {
-        var orders = await _context.Orders
+        var orders = await _context.Orders.Where(x => !x.IsDeleted)
             .Include(o => o.OrderItems)
             .Include(o => o.Payments)
             .Where(o => o.Status == status && o.IsActive)
@@ -71,7 +71,7 @@ public class OrderService : IOrderService
         return ApiResponse<List<OrderDto>>.Success(orderDtos);
     }
 
-    public async Task<ApiResponse<OrderDto>> CreateOrderAsync(CreateOrderDto createOrderDto)
+    public async Task<ApiResponse<OrderDto>> CreateOrderAsync(CreateOrderDto createOrderDto, int? tenantId = null)
     {
         var order = new Order
         {
@@ -114,7 +114,7 @@ public class OrderService : IOrderService
 
     public async Task<ApiResponse<OrderDto>> UpdateOrderAsync(Guid id, UpdateOrderDto updateOrderDto)
     {
-        var order = await _context.Orders
+        var order = await _context.Orders.Where(x => !x.IsDeleted)
             .Include(o => o.OrderItems)
             .FirstOrDefaultAsync(o => o.Id == id);
 
@@ -168,6 +168,30 @@ public class OrderService : IOrderService
         await _context.SaveChangesAsync();
 
         return ApiResponse<string>.Success("Order confirmed successfully");
+    }
+
+    public async Task<ApiResponse<string>> DeleteOrderAsync(Guid id)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null)
+            return new ApiResponse<string> { Data = null, IsSuccess = false, Message = "Order not found" };
+
+        order.IsActive = false;
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<string> { Data = "Order deleted successfully", IsSuccess = true, Message = "Order deleted successfully" };
+    }
+
+    public async Task<ApiResponse<string>> UpdateOrderStatusAsync(Guid id, string status)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null)
+            return new ApiResponse<string> { Data = null, IsSuccess = false, Message = "Order not found" };
+
+        order.Status = status;
+        await _context.SaveChangesAsync();
+
+        return new ApiResponse<string> { Data = "Order status updated successfully", IsSuccess = true, Message = "Order status updated successfully" };
     }
 
     private string GenerateOrderNumber()

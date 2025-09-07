@@ -18,17 +18,21 @@ public class CompanyService : ICompanyService
         _mapper = mapper;
     }
 
-    public async Task<ApiResponse<IEnumerable<CompanyDto>>> GetAllCompaniesAsync()
+    public async Task<ApiResponse<IEnumerable<CompanyDto>>> GetAllCompaniesAsync(int? tenantId = null)
     {
         try
         {
-            var companies = await _context.Companies.ToListAsync();
+            var query = _context.Companies.Where(x => !x.IsDeleted).AsQueryable();
+            if (tenantId.HasValue)
+                query = query.Where(c => c.TenantId == tenantId.Value);
+                
+            var companies = await query.ToListAsync();
             var companyDtos = _mapper.Map<IEnumerable<CompanyDto>>(companies);
-            return ApiResponse<IEnumerable<CompanyDto>>.Success(companyDtos);
+            return new ApiResponse<IEnumerable<CompanyDto>> { Data = companyDtos, IsSuccess = true, Message = "Companies retrieved successfully" };
         }
         catch (Exception ex)
         {
-            return ApiResponse<IEnumerable<CompanyDto>>.Error($"Error retrieving companies: {ex.Message}");
+            return new ApiResponse<IEnumerable<CompanyDto>> { Data = null, IsSuccess = false, Message = $"Error retrieving companies: {ex.Message}" };
         }
     }
 
@@ -38,14 +42,14 @@ public class CompanyService : ICompanyService
         {
             var company = await _context.Companies.FindAsync(id);
             if (company == null)
-                return ApiResponse<CompanyDto>.Error("Company not found");
+                return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = "Company not found" };
 
             var companyDto = _mapper.Map<CompanyDto>(company);
-            return ApiResponse<CompanyDto>.Success(companyDto);
+            return new ApiResponse<CompanyDto> { Data = companyDto, IsSuccess = true, Message = "Company retrieved successfully" };
         }
         catch (Exception ex)
         {
-            return ApiResponse<CompanyDto>.Error($"Error retrieving company: {ex.Message}");
+            return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = $"Error retrieving company: {ex.Message}" };
         }
     }
 
@@ -55,14 +59,14 @@ public class CompanyService : ICompanyService
         {
             var company = await _context.Companies.FirstOrDefaultAsync(c => c.Code == code);
             if (company == null)
-                return ApiResponse<CompanyDto>.Error("Company not found");
+                return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = "Company not found" };
 
             var companyDto = _mapper.Map<CompanyDto>(company);
-            return ApiResponse<CompanyDto>.Success(companyDto);
+            return new ApiResponse<CompanyDto> { Data = companyDto, IsSuccess = true, Message = "Company retrieved successfully" };
         }
         catch (Exception ex)
         {
-            return ApiResponse<CompanyDto>.Error($"Error retrieving company: {ex.Message}");
+            return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = $"Error retrieving company: {ex.Message}" };
         }
     }
 
@@ -79,11 +83,11 @@ public class CompanyService : ICompanyService
             await _context.SaveChangesAsync();
 
             var companyDto = _mapper.Map<CompanyDto>(company);
-            return ApiResponse<CompanyDto>.Success(companyDto);
+            return new ApiResponse<CompanyDto> { Data = companyDto, IsSuccess = true, Message = "Company created successfully" };
         }
         catch (Exception ex)
         {
-            return ApiResponse<CompanyDto>.Error($"Error creating company: {ex.Message}");
+            return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = $"Error creating company: {ex.Message}" };
         }
     }
 
@@ -93,7 +97,7 @@ public class CompanyService : ICompanyService
         {
             var company = await _context.Companies.FindAsync(id);
             if (company == null)
-                return ApiResponse<CompanyDto>.Error("Company not found");
+                return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = "Company not found" };
 
             _mapper.Map(updateCompanyDto, company);
             company.UpdatedAt = DateTime.UtcNow;
@@ -101,11 +105,11 @@ public class CompanyService : ICompanyService
             await _context.SaveChangesAsync();
 
             var companyDto = _mapper.Map<CompanyDto>(company);
-            return ApiResponse<CompanyDto>.Success(companyDto);
+            return new ApiResponse<CompanyDto> { Data = companyDto, IsSuccess = true, Message = "Company updated successfully" };
         }
         catch (Exception ex)
         {
-            return ApiResponse<CompanyDto>.Error($"Error updating company: {ex.Message}");
+            return new ApiResponse<CompanyDto> { Data = null, IsSuccess = false, Message = $"Error updating company: {ex.Message}" };
         }
     }
 
@@ -115,16 +119,16 @@ public class CompanyService : ICompanyService
         {
             var company = await _context.Companies.FindAsync(id);
             if (company == null)
-                return ApiResponse<bool>.Error("Company not found");
+                return new ApiResponse<bool> { Data = false, IsSuccess = false, Message = "Company not found" };
 
             _context.Companies.Remove(company);
             await _context.SaveChangesAsync();
 
-            return ApiResponse<bool>.Success(true);
+            return new ApiResponse<bool> { Data = true, IsSuccess = true, Message = "Company deleted successfully" };
         }
         catch (Exception ex)
         {
-            return ApiResponse<bool>.Error($"Error deleting company: {ex.Message}");
+            return new ApiResponse<bool> { Data = false, IsSuccess = false, Message = $"Error deleting company: {ex.Message}" };
         }
     }
 }

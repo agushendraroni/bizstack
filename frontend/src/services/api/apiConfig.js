@@ -1,7 +1,10 @@
 // API Configuration for BizStack Services
-// Direct API access for MVP - will migrate to GraphQL later
+// Using GraphQL Mesh for unified API access
+
+const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql';
 
 const API_BASE_URLS = {
+  graphql: 'http://localhost:4000',
   auth: 'http://localhost:5001',
   user: 'http://localhost:5002', 
   organization: 'http://localhost:5003',
@@ -10,7 +13,8 @@ const API_BASE_URLS = {
   transaction: 'http://localhost:5006',
   report: 'http://localhost:5007',
   notification: 'http://localhost:5008',
-  fileStorage: 'http://localhost:5009'
+  fileStorage: 'http://localhost:5009',
+  settings: 'http://localhost:5010'
 };
 
 // API Endpoints
@@ -55,6 +59,13 @@ export const API_ENDPOINTS = {
     create: '/api/Customers',
     update: (id) => `/api/Customers/${id}`,
     delete: (id) => `/api/Customers/${id}`
+  },
+  
+  // Settings Service
+  settings: {
+    menuItems: '/api/MenuItems',
+    menuTree: (context) => `/api/MenuItems/tree/${context}`,
+    menuFlat: (context) => `/api/MenuItems/flat?context=${context}`
   }
 };
 
@@ -146,7 +157,8 @@ export const apiClients = {
   transaction: new ApiClient(API_BASE_URLS.transaction),
   report: new ApiClient(API_BASE_URLS.report),
   notification: new ApiClient(API_BASE_URLS.notification),
-  fileStorage: new ApiClient(API_BASE_URLS.fileStorage)
+  fileStorage: new ApiClient(API_BASE_URLS.fileStorage),
+  settings: new ApiClient(API_BASE_URLS.settings)
 };
 
 export default ApiClient;

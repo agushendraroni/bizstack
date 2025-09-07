@@ -1,11 +1,15 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using ReportService.DTOs;
 using SharedLibrary.DTOs;
 
 namespace ReportService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class ReportsController : ControllerBase
 {
     [HttpGet("dashboard")]
@@ -114,5 +118,15 @@ public class ReportsController : ControllerBase
             new() { CustomerName = "Bob Johnson", TotalSpent = 8750.25m, TotalOrders = 8, LastOrderDate = DateTime.Today.AddDays(-10), CustomerType = "Regular" },
             new() { CustomerName = "Alice Brown", TotalSpent = 12300.75m, TotalOrders = 10, LastOrderDate = DateTime.Today.AddDays(-3), CustomerType = "Regular" }
         };
+    }
+
+    private Guid? GetUserId()
+    {
+        if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+            Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+        {
+            return userId;
+        }
+        return null;
     }
 }

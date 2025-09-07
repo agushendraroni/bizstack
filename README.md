@@ -4,13 +4,14 @@
 
 ## ✨ Fitur Utama
 
-- 🏗️ **9 Microservices** terintegrasi penuh
+- 🏗️ **10 Microservices** terintegrasi penuh dengan API versioning
 - 🔗 **GraphQL API Gateway** untuk unified access
 - 🔄 **n8n Workflow Automation** untuk business process
 - 🛡️ **JWT Authentication** & role-based access
 - 📊 **Real-time Dashboard** & business analytics
 - 📱 **Multi-platform** support (Web, Mobile, API)
 - 🎯 **Business-agnostic** - cocok untuk semua model bisnis
+- 🔄 **API Versioning** - Consistent v1.0 across all services
 
 ## 🚀 Quick Start
 
@@ -35,22 +36,25 @@ docker-compose up -d
 ### 3. Access Framework
 - **GraphQL API**: http://localhost:4000
 - **n8n Workflows**: http://localhost:5678 (admin/admin123)
-- **Service APIs**: http://localhost:500X (X=1-9)
+- **Service APIs**: http://localhost:500X (X=1-10)
+- **Swagger UI**: http://localhost:500X/ (for each service)
+- **API Endpoints**: http://localhost:500X/api/v1.0/{controller}
 
 ## 🏗️ Architecture Overview
 
 ### Backend Services (Production Ready)
-| Service | Port | Status | Description |
-|---------|------|--------|-------------|
-| **auth-service** | 5001 | ✅ | JWT Authentication & Authorization |
-| **user-service** | 5002 | ✅ | User Management & Profiles |
-| **organization-service** | 5003 | ✅ | Company & Organization Data |
-| **product-service** | 5004 | ✅ | Product & Inventory Management |
-| **customer-service** | 5005 | ✅ | Customer Relationship Management |
-| **transaction-service** | 5006 | ✅ | Sales & Transaction Processing |
-| **report-service** | 5007 | ✅ | Business Analytics & Reports |
-| **notification-service** | 5008 | ✅ | Email, SMS, WhatsApp Notifications |
-| **file-storage-service** | 5009 | ✅ | File Upload & Management |
+| Service | Port | API Version | Status | Description |
+|---------|------|-------------|--------|-------------|
+| **auth-service** | 5001 | v1.0 | ✅ | JWT Authentication & Authorization |
+| **user-service** | 5002 | v1.0 | ✅ | User Management & Profiles |
+| **organization-service** | 5003 | v1.0 | ✅ | Company & Organization Data |
+| **product-service** | 5004 | v1.0 | ✅ | Product & Inventory Management |
+| **customer-service** | 5005 | v1.0 | ✅ | Customer Relationship Management |
+| **transaction-service** | 5006 | v1.0 | ✅ | Sales & Transaction Processing |
+| **report-service** | 5007 | v1.0 | ✅ | Business Analytics & Reports |
+| **notification-service** | 5008 | v1.0 | ✅ | Email, SMS, WhatsApp Notifications |
+| **file-storage-service** | 5009 | v1.0 | ✅ | File Upload & Management |
+| **settings-service** | 5010 | v1.0 | ✅ | System Settings & Configuration |
 
 ### Integration Layer
 - **GraphQL Mesh** (4000) - Unified API Gateway
@@ -206,10 +210,18 @@ mutation ProcessSale($customerId: String!, $items: [SaleItemInput!]!) {
 # Verify all services
 ./verify-swagger.sh
 
+# Test API versioning (example)
+curl http://localhost:5001/api/v1.0/roles
+curl http://localhost:5005/api/v1.0/customers
+
 # Test GraphQL API
 curl -X POST http://localhost:4000/graphql \
   -H "Content-Type: application/json" \
   -d '{"query": "{ __schema { types { name } } }"}'
+
+# Test Swagger UI
+open http://localhost:5001/  # Auth Service Swagger
+open http://localhost:5005/  # Customer Service Swagger
 ```
 
 ## 🤝 Contributing

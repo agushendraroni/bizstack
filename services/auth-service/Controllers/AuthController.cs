@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using AuthService.DTOs;
 using AuthService.Services;
 using SharedLibrary.DTOs;
@@ -6,7 +7,9 @@ using SharedLibrary.DTOs;
 namespace AuthService.Controllers
 {
     [ApiController]
+    [ApiVersion("1.0")]
     [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -22,9 +25,9 @@ namespace AuthService.Controllers
             var result = await _authService.LoginAsync(request);
             
             if (result == null)
-                return Unauthorized(ApiResponse<LoginResponse>.Error("Invalid username or password"));
+                return Unauthorized(new ApiResponse<LoginResponse> { Data = null, IsSuccess = false, Message = "Invalid username or password" });
 
-            return Ok(ApiResponse<LoginResponse>.Success(result, "Login successful"));
+            return Ok(new ApiResponse<LoginResponse> { Data = result, IsSuccess = true, Message = "Login successful" });
         }
 
         [HttpPost("refresh")]
@@ -33,9 +36,9 @@ namespace AuthService.Controllers
             var result = await _authService.RefreshTokenAsync(refreshToken);
             
             if (result == null)
-                return Unauthorized(ApiResponse<LoginResponse>.Error("Invalid refresh token"));
+                return Unauthorized(new ApiResponse<LoginResponse> { Data = null, IsSuccess = false, Message = "Invalid refresh token" });
 
-            return Ok(ApiResponse<LoginResponse>.Success(result, "Token refreshed"));
+            return Ok(new ApiResponse<LoginResponse> { Data = result, IsSuccess = true, Message = "Token refreshed" });
         }
 
         [HttpPost("logout")]
@@ -44,9 +47,9 @@ namespace AuthService.Controllers
             var success = await _authService.LogoutAsync(refreshToken);
             
             if (!success)
-                return BadRequest(ApiResponse<string>.Error("Invalid refresh token"));
+                return BadRequest(new ApiResponse<string> { Data = null, IsSuccess = false, Message = "Invalid refresh token" });
 
-            return Ok(ApiResponse<string>.Success("Logged out successfully"));
+            return Ok(new ApiResponse<string> { Data = "Logged out successfully", IsSuccess = true });
         }
 
         [HttpPost("register")]
@@ -55,9 +58,19 @@ namespace AuthService.Controllers
             var success = await _authService.RegisterAsync(request.Username, request.Password, request.CompanyId);
             
             if (!success)
-                return BadRequest(ApiResponse<string>.Error("Username already exists"));
+                return BadRequest(new ApiResponse<string> { Data = null, IsSuccess = false, Message = "Username already exists" });
 
-            return Ok(ApiResponse<string>.Success("User registered successfully"));
+            return Ok(new ApiResponse<string> { Data = "User registered successfully", IsSuccess = true });
+        }
+
+        private Guid? GetUserId()
+        {
+            if (Request.Headers.TryGetValue("X-User-Id", out var userIdHeader) && 
+                Guid.TryParse(userIdHeader.FirstOrDefault(), out var userId))
+            {
+                return userId;
+            }
+            return null;
         }
     }
 

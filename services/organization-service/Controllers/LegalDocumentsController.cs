@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using OrganizationService.Data;
 using OrganizationService.Models;
@@ -7,7 +9,9 @@ using SharedLibrary.DTOs;
 namespace OrganizationService.Controllers;
 
 [ApiController]
+[ApiVersion("1.0")]
 [Route("api/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class LegalDocumentsController : ControllerBase
 {
     private readonly OrganizationDbContext _context;
@@ -153,4 +157,9 @@ public class UpdateLegalDocumentDto
     public string? Issuer { get; set; }
     public string? Description { get; set; }
     public string? FileUrl { get; set; }
+
+    private Guid? GetUserId()
+    {
+        return null;
+    }
 }

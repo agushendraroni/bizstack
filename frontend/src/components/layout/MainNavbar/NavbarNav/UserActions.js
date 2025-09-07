@@ -64,16 +64,6 @@ export default class UserActions extends React.Component {
             <i className="fas fa-key mr-2"></i> Change Password
           </DropdownItem>
           <DropdownItem divider />
-          <DropdownItem tag={Link} to="/company">
-            <i className="fas fa-building mr-2"></i> Company Info
-          </DropdownItem>
-          <DropdownItem tag={Link} to="/dashboard">
-            <i className="fas fa-tachometer-alt mr-2"></i> Dashboard
-          </DropdownItem>
-          <DropdownItem tag={Link} to="/users">
-            <i className="fas fa-users mr-2"></i> User Management
-          </DropdownItem>
-          <DropdownItem divider />
           <DropdownItem onClick={this.handleLogout} className="text-danger" style={{cursor: 'pointer'}}>
             <i className="fas fa-sign-out-alt text-danger mr-2"></i> Logout
           </DropdownItem>

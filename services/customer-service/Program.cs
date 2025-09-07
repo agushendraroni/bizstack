@@ -1,3 +1,5 @@
+using SharedLibrary.Middlewares;
+using SharedLibrary.Extensions;
 using Microsoft.EntityFrameworkCore;
 using CustomerService.Data;
 using CustomerService.MappingProfiles;
@@ -7,10 +9,36 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = Asp.Versioning.ApiVersionReader.Combine(
+        new Asp.Versioning.QueryStringApiVersionReader("version"),
+        new Asp.Versioning.HeaderApiVersionReader("X-Version"),
+        new Asp.Versioning.UrlSegmentApiVersionReader()
+    );
+}).AddMvc();
+
 builder.Services.AddEndpointsApiExplorer();
+
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<CustomerDbContext>();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "Customer Service API", Version = "v1" });
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Customer Service API",
+        Version = "v1.0"
+    });
+    c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
+    {
+        Url = "http://customer-service:5005",
+        Description = "Customer Service"
+    });
 });
 
 // Database
@@ -43,16 +71,21 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Customer Service API v1");
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Customer Service API v1.0");
         options.RoutePrefix = string.Empty;
     });
 }
 
 // Health endpoint
-app.MapGet("/health", () => "Customer Service is running");
+// Health Checks
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready");
 
 app.UseCors("AllowAll");
+app.UseSecurityHeaders();
+app.UseSecurityHeaders();
 app.UseRouting();
+app.UseTenantMiddleware();
 app.UseAuthorization();
 app.MapControllers();
 

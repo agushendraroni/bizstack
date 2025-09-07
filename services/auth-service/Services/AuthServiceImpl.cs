@@ -8,6 +8,21 @@ using AuthService.Data;
 using AuthService.DTOs;
 using AuthService.Models;
 
+public class CompanyInfo
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int? TenantId { get; set; }
+}
+
+public class ApiResponse<T>
+{
+    public bool IsSuccess { get; set; }
+    public T? Data { get; set; }
+    public string? Message { get; set; }
+}
+
 namespace AuthService.Services
 {
     public class AuthServiceImpl : IAuthService
@@ -23,15 +38,20 @@ namespace AuthService.Services
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
+            // First, lookup company by CompanyCode
+            var companyResponse = await GetCompanyByCodeAsync(request.CompanyCode);
+            if (companyResponse == null)
+                return null;
+
             var user = await _context.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Username == request.Username);
+                .FirstOrDefaultAsync(u => u.Username == request.Username && u.CompanyId == companyResponse.Id);
 
             if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
                 return null;
 
-            var accessToken = GenerateAccessToken(user);
+            var accessToken = GenerateAccessToken(user, companyResponse);
             var refreshToken = GenerateRefreshToken();
 
             // Save refresh token
@@ -53,6 +73,9 @@ namespace AuthService.Services
                 UserId = user.Id,
                 Username = user.Username,
                 CompanyId = user.CompanyId,
+                CompanyCode = companyResponse.Code,
+                CompanyName = companyResponse.Name,
+                TenantId = companyResponse.TenantId,
                 Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
             };
         }
@@ -68,7 +91,30 @@ namespace AuthService.Services
             if (tokenEntity == null || tokenEntity.ExpiryDate < DateTime.UtcNow)
                 return null;
 
-            var accessToken = GenerateAccessToken(tokenEntity.User);
+            // Get company info if user has a company
+            CompanyInfo? company = null;
+            if (tokenEntity.User.CompanyId.HasValue)
+            {
+                // Try to get company info, but don't fail if service is unavailable
+                try
+                {
+                    using var httpClient = new HttpClient();
+                    var orgServiceUrl = _configuration["Services:OrganizationService"] ?? "http://localhost:5003";
+                    var response = await httpClient.GetAsync($"{orgServiceUrl}/api/companies/{tokenEntity.User.CompanyId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsStringAsync();
+                        var apiResponse = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<CompanyInfo>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        company = apiResponse?.Data;
+                    }
+                }
+                catch
+                {
+                    // Continue without company info if service is unavailable
+                }
+            }
+
+            var accessToken = GenerateAccessToken(tokenEntity.User, company);
             
             return new LoginResponse
             {
@@ -78,6 +124,9 @@ namespace AuthService.Services
                 UserId = tokenEntity.User.Id,
                 Username = tokenEntity.User.Username,
                 CompanyId = tokenEntity.User.CompanyId,
+                CompanyCode = company?.Code,
+                CompanyName = company?.Name,
+                TenantId = company?.TenantId,
                 Roles = tokenEntity.User.UserRoles.Select(ur => ur.Role.Name).ToList()
             };
         }
@@ -114,7 +163,31 @@ namespace AuthService.Services
             return true;
         }
 
-        private string GenerateAccessToken(User user)
+        private async Task<CompanyInfo?> GetCompanyByCodeAsync(string companyCode)
+        {
+            // Call Organization Service to get company by code
+            using var httpClient = new HttpClient();
+            var orgServiceUrl = _configuration["Services:OrganizationService"] ?? "http://localhost:5003";
+            
+            try
+            {
+                var response = await httpClient.GetAsync($"{orgServiceUrl}/api/companies/by-code/{companyCode}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<CompanyInfo>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return apiResponse?.Data;
+                }
+            }
+            catch
+            {
+                // Log error
+            }
+            
+            return null;
+        }
+
+        private string GenerateAccessToken(User user, CompanyInfo? company = null)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -127,6 +200,13 @@ namespace AuthService.Services
 
             if (user.CompanyId.HasValue)
                 claims.Add(new("CompanyId", user.CompanyId.Value.ToString()));
+
+            if (company != null)
+            {
+                claims.Add(new("CompanyCode", company.Code));
+                if (company.TenantId.HasValue)
+                    claims.Add(new("TenantId", company.TenantId.Value.ToString()));
+            }
 
             foreach (var role in user.UserRoles)
                 claims.Add(new(ClaimTypes.Role, role.Role.Name));

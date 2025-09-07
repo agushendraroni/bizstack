@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using Microsoft.EntityFrameworkCore;
 using SettingsService.Data;
 using SettingsService.Models;
@@ -7,7 +9,8 @@ using SharedLibrary.DTOs;
 namespace SettingsService.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
 public class SystemSettingsController : ControllerBase
 {
     private readonly SettingsDbContext _context;
@@ -214,4 +217,14 @@ public class UpdateSystemSettingDto
     public int? SortOrder { get; set; }
     public string? Group { get; set; }
     public string? Section { get; set; }
+
+    private int? GetTenantId()
+    {
+        return null;
+    }
+
+    private Guid? GetUserId()
+    {
+        return null;
+    }
 }

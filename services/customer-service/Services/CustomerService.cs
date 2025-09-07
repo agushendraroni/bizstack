@@ -18,20 +18,23 @@ public class CustomerService : ICustomerService
         _mapper = mapper;
     }
 
-    public async Task<ApiResponse<List<CustomerDto>>> GetAllCustomersAsync()
+    public async Task<ApiResponse<List<CustomerDto>>> GetAllCustomersAsync(int? tenantId = null)
     {
-        var customers = await _context.Customers
+        var query = _context.Customers.Where(x => !x.IsDeleted)
             .Include(c => c.CustomerGroup)
-            .Where(c => c.IsActive)
-            .ToListAsync();
-
+            .Where(c => c.IsActive);
+            
+        if (tenantId.HasValue)
+            query = query.Where(c => c.TenantId == tenantId.Value);
+            
+        var customers = await query.ToListAsync();
         var customerDtos = _mapper.Map<List<CustomerDto>>(customers);
         return ApiResponse<List<CustomerDto>>.Success(customerDtos);
     }
 
     public async Task<ApiResponse<CustomerDto>> GetCustomerByIdAsync(Guid id)
     {
-        var customer = await _context.Customers
+        var customer = await _context.Customers.Where(x => !x.IsDeleted)
             .Include(c => c.CustomerGroup)
             .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -44,7 +47,7 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<CustomerDto>>> GetCustomersByGroupAsync(Guid groupId)
     {
-        var customers = await _context.Customers
+        var customers = await _context.Customers.Where(x => !x.IsDeleted)
             .Include(c => c.CustomerGroup)
             .Where(c => c.CustomerGroupId == groupId && c.IsActive)
             .ToListAsync();
@@ -55,7 +58,7 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<CustomerDto>>> SearchCustomersAsync(string searchTerm)
     {
-        var customers = await _context.Customers
+        var customers = await _context.Customers.Where(x => !x.IsDeleted)
             .Include(c => c.CustomerGroup)
             .Where(c => c.IsActive && 
                        (c.Name.Contains(searchTerm) || 
@@ -69,7 +72,7 @@ public class CustomerService : ICustomerService
 
     public async Task<ApiResponse<List<CustomerDto>>> GetVipCustomersAsync()
     {
-        var customers = await _context.Customers
+        var customers = await _context.Customers.Where(x => !x.IsDeleted)
             .Include(c => c.CustomerGroup)
             .Where(c => c.IsActive && (c.CustomerType == "VIP" || c.TotalSpent >= 10000))
             .OrderByDescending(c => c.TotalSpent)
@@ -79,9 +82,10 @@ public class CustomerService : ICustomerService
         return ApiResponse<List<CustomerDto>>.Success(customerDtos);
     }
 
-    public async Task<ApiResponse<CustomerDto>> CreateCustomerAsync(CreateCustomerDto createCustomerDto)
+    public async Task<ApiResponse<CustomerDto>> CreateCustomerAsync(CreateCustomerDto createCustomerDto, int? tenantId = null)
     {
         var customer = _mapper.Map<Customer>(createCustomerDto);
+        customer.TenantId = tenantId;
         
         _context.Customers.Add(customer);
         await _context.SaveChangesAsync();
