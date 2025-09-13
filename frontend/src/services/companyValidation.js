@@ -18,7 +18,7 @@ class CompanyValidationService {
       });
 
       const result = await response.json();
-      if (result.isSuccess && result.data?.accessToken) {
+      if (result.isSuccess && result.data && result.data.accessToken) {
         this.systemToken = result.data.accessToken;
         return this.systemToken;
       }

@@ -44,7 +44,7 @@ public class LegalDocumentsController : ControllerBase
     }
 
     [HttpGet("company/{companyId}")]
-    public async Task<IActionResult> GetLegalDocumentsByCompany(Guid companyId)
+    public async Task<IActionResult> GetLegalDocumentsByCompany(int companyId)
     {
         var documents = await _context.LegalDocuments
             .Where(ld => ld.CompanyId == companyId)
@@ -138,7 +138,7 @@ public class LegalDocumentsController : ControllerBase
 
 public class CreateLegalDocumentDto
 {
-    public Guid CompanyId { get; set; }
+    public int CompanyId { get; set; }
     public string DocumentType { get; set; } = string.Empty;
     public string DocumentNumber { get; set; } = string.Empty;
     public DateTime? IssueDate { get; set; }

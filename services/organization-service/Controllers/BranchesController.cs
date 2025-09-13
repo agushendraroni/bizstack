@@ -44,7 +44,7 @@ public class BranchesController : ControllerBase
     }
 
     [HttpGet("company/{companyId}")]
-    public async Task<IActionResult> GetBranchesByCompany(Guid companyId)
+    public async Task<IActionResult> GetBranchesByCompany(int companyId)
     {
         var branches = await _context.Branches
             .Where(b => b.CompanyId == companyId)
@@ -105,7 +105,7 @@ public class CreateBranchDto
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
-    public Guid CompanyId { get; set; }
+    public int CompanyId { get; set; }
 }
 
 public class UpdateBranchDto

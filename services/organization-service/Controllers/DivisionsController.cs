@@ -48,7 +48,7 @@ public class DivisionsController : ControllerBase
     }
 
     [HttpGet("company/{companyId}")]
-    public async Task<IActionResult> GetDivisionsByCompany(Guid companyId)
+    public async Task<IActionResult> GetDivisionsByCompany(int companyId)
     {
         var divisions = await _context.Divisions
             .Where(d => d.CompanyId == companyId)
@@ -110,7 +110,7 @@ public class DivisionsController : ControllerBase
 public class CreateDivisionDto
 {
     public string Name { get; set; } = string.Empty;
-    public Guid CompanyId { get; set; }
+    public int CompanyId { get; set; }
 }
 
 public class UpdateDivisionDto

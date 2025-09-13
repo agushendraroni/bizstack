@@ -27,10 +27,10 @@ public class CompaniesController : ControllerBase
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetCompanyById(Guid id)
+    [HttpGet("{tenantId}")]
+    public async Task<IActionResult> GetCompanyById(int tenantId)
     {
-        var result = await _companyService.GetCompanyByIdAsync(id);
+        var result = await _companyService.GetCompanyByIdAsync(tenantId);
         return result.IsSuccess ? Ok(result) : NotFound(result);
     }
 
@@ -45,20 +45,20 @@ public class CompaniesController : ControllerBase
     public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto createCompanyDto)
     {
         var result = await _companyService.CreateCompanyAsync(createCompanyDto);
-        return result.IsSuccess ? CreatedAtAction(nameof(GetCompanyById), new { id = result.Data?.Id }, result) : BadRequest(result);
+        return result.IsSuccess ? CreatedAtAction(nameof(GetCompanyById), new { tenantId = result.Data?.TenantId }, result) : BadRequest(result);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] UpdateCompanyDto updateCompanyDto)
+    [HttpPut("{tenantId}")]
+    public async Task<IActionResult> UpdateCompany(int tenantId, [FromBody] UpdateCompanyDto updateCompanyDto)
     {
-        var result = await _companyService.UpdateCompanyAsync(id, updateCompanyDto);
+        var result = await _companyService.UpdateCompanyAsync(tenantId, updateCompanyDto);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCompany(Guid id)
+    [HttpDelete("{tenantId}")]
+    public async Task<IActionResult> DeleteCompany(int tenantId)
     {
-        var result = await _companyService.DeleteCompanyAsync(id);
+        var result = await _companyService.DeleteCompanyAsync(tenantId);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 

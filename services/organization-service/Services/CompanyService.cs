@@ -23,8 +23,7 @@ public class CompanyService : ICompanyService
         try
         {
             var query = _context.Companies.Where(x => !x.IsDeleted).AsQueryable();
-            if (tenantId.HasValue)
-                query = query.Where(c => c.TenantId == tenantId.Value);
+            // Company doesn't have TenantId since it IS the tenant
                 
             var companies = await query.ToListAsync();
             var companyDtos = _mapper.Map<IEnumerable<CompanyDto>>(companies);
@@ -36,7 +35,7 @@ public class CompanyService : ICompanyService
         }
     }
 
-    public async Task<ApiResponse<CompanyDto>> GetCompanyByIdAsync(Guid id)
+    public async Task<ApiResponse<CompanyDto>> GetCompanyByIdAsync(int id)
     {
         try
         {
@@ -75,7 +74,6 @@ public class CompanyService : ICompanyService
         try
         {
             var company = _mapper.Map<Company>(createCompanyDto);
-            company.Id = Guid.NewGuid();
             company.CreatedAt = DateTime.UtcNow;
             company.IsActive = true;
 
@@ -91,7 +89,7 @@ public class CompanyService : ICompanyService
         }
     }
 
-    public async Task<ApiResponse<CompanyDto>> UpdateCompanyAsync(Guid id, UpdateCompanyDto updateCompanyDto)
+    public async Task<ApiResponse<CompanyDto>> UpdateCompanyAsync(int id, UpdateCompanyDto updateCompanyDto)
     {
         try
         {
@@ -113,7 +111,7 @@ public class CompanyService : ICompanyService
         }
     }
 
-    public async Task<ApiResponse<bool>> DeleteCompanyAsync(Guid id)
+    public async Task<ApiResponse<bool>> DeleteCompanyAsync(int id)
     {
         try
         {

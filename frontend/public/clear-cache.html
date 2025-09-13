@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Cache</title>
+</head>
+<body>
+    <h1>Clearing Browser Data...</h1>
+    <script>
+        // Clear all localStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear any cached routes
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+            });
+        }
+        
+        // Redirect to company selector
+        setTimeout(() => {
+            window.location.href = '/company';
+        }, 1000);
+    </script>
+    <p>Redirecting to company selector...</p>
+</body>
+</html>
