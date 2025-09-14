@@ -48,8 +48,9 @@ export default class UserActions extends React.Component {
         <DropdownToggle caret tag={NavLink} className="text-nowrap px-3">
           <img
             className="user-avatar rounded-circle mr-2"
-            src={require("./../../../../images/avatars/0.jpg")}
+            src="data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23007bff'/%3e%3ctext x='50' y='50' font-size='40' fill='white' text-anchor='middle' dy='.3em'%3eA%3c/text%3e%3c/svg%3e"
             alt="User Avatar"
+            style={{width: '32px', height: '32px'}}
           />{" "}
           <span className="d-none d-md-inline-block">{displayName}</span>
         </DropdownToggle>

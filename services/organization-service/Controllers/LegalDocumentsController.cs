@@ -43,11 +43,11 @@ public class LegalDocumentsController : ControllerBase
         return Ok(ApiResponse<LegalDocument>.Success(document));
     }
 
-    [HttpGet("company/{companyId}")]
-    public async Task<IActionResult> GetLegalDocumentsByCompany(int companyId)
+    [HttpGet("company/{tenantId}")]
+    public async Task<IActionResult> GetLegalDocumentsByCompany(int tenantId)
     {
         var documents = await _context.LegalDocuments
-            .Where(ld => ld.CompanyId == companyId)
+            .Where(ld => ld.TenantId == tenantId)
             .Include(ld => ld.Company)
             .ToListAsync();
         
@@ -81,13 +81,13 @@ public class LegalDocumentsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateLegalDocument([FromBody] CreateLegalDocumentDto dto)
     {
-        var company = await _context.Companies.FindAsync(dto.CompanyId);
+        var company = await _context.Companies.FindAsync(dto.TenantId);
         if (company == null)
             return BadRequest(ApiResponse<LegalDocument>.Error("Company not found"));
 
         var document = new LegalDocument
         {
-            CompanyId = dto.CompanyId,
+            TenantId = dto.TenantId,
             DocumentType = dto.DocumentType,
             DocumentNumber = dto.DocumentNumber,
             IssueDate = dto.IssueDate,
@@ -138,7 +138,7 @@ public class LegalDocumentsController : ControllerBase
 
 public class CreateLegalDocumentDto
 {
-    public int CompanyId { get; set; }
+    public int TenantId { get; set; }
     public string DocumentType { get; set; } = string.Empty;
     public string DocumentNumber { get; set; } = string.Empty;
     public DateTime? IssueDate { get; set; }

@@ -31,16 +31,28 @@ class SidebarMainNavbar extends React.Component {
             style={{ lineHeight: "25px" }}
           >
             <div className="d-table m-auto">
-              <img
+              <div
                 id="main-logo"
                 className="d-inline-block align-top mr-1"
-                style={{ maxWidth: "25px" }}
-                src={require("../../../images/shards-dashboards-logo.svg")}
-                alt="Ahero Dashboard"
-              />
+                style={{ 
+                  maxWidth: "25px", 
+                  width: "25px", 
+                  height: "25px", 
+                  backgroundColor: "#007bff", 
+                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: "bold"
+                }}
+              >
+                B
+              </div>
               {!hideLogoText && (
                 <span className="d-none d-md-inline ml-1">
-                  Ahero Dashboard
+                  BizStack
                 </span>
               )}
             </div>

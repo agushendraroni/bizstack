@@ -8,6 +8,10 @@ namespace OrganizationService.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int TenantId { get; set; }
+        
+        // CompanyId sama dengan TenantId untuk foreign key references
+        [NotMapped]
+        public int CompanyId => TenantId;
 
         [Required, MaxLength(50)]
         public string Code { get; set; } = null!;

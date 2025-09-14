@@ -4,7 +4,6 @@ using SharedLibrary.Entities;
 
 public class LegalDocument : BaseEntity
 {
-    public int CompanyId { get; set; }
     public Company Company { get; set; } = null!;
     public string DocumentType { get; set; } = null!;
     public string DocumentNumber { get; set; } = null!;

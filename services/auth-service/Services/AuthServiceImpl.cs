@@ -46,7 +46,7 @@ namespace AuthService.Services
             var user = await _context.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Username == request.Username && u.CompanyId == companyResponse.Id);
+                .FirstOrDefaultAsync(u => u.Username == request.Username && u.TenantId == companyResponse.TenantId);
 
             if (user == null || !VerifyPassword(request.Password, user.PasswordHash))
                 return null;
@@ -72,7 +72,6 @@ namespace AuthService.Services
                 ExpiresAt = DateTime.UtcNow.AddHours(1),
                 UserId = user.Id,
                 Username = user.Username,
-                CompanyId = user.CompanyId,
                 CompanyCode = companyResponse.Code,
                 CompanyName = companyResponse.Name,
                 TenantId = companyResponse.TenantId,
@@ -91,16 +90,16 @@ namespace AuthService.Services
             if (tokenEntity == null || tokenEntity.ExpiryDate < DateTime.UtcNow)
                 return null;
 
-            // Get company info if user has a company
+            // Get company info from TenantId
             CompanyInfo? company = null;
-            if (tokenEntity.User.CompanyId.HasValue)
+            if (tokenEntity.User.TenantId > 0)
             {
                 // Try to get company info, but don't fail if service is unavailable
                 try
                 {
                     using var httpClient = new HttpClient();
                     var orgServiceUrl = _configuration["Services:OrganizationService"] ?? "http://localhost:5003";
-                    var response = await httpClient.GetAsync($"{orgServiceUrl}/api/companies/{tokenEntity.User.CompanyId}");
+                    var response = await httpClient.GetAsync($"{orgServiceUrl}/api/companies/{tokenEntity.User.TenantId}");
                     if (response.IsSuccessStatusCode)
                     {
                         var content = await response.Content.ReadAsStringAsync();
@@ -123,10 +122,9 @@ namespace AuthService.Services
                 ExpiresAt = DateTime.UtcNow.AddHours(1),
                 UserId = tokenEntity.User.Id,
                 Username = tokenEntity.User.Username,
-                CompanyId = tokenEntity.User.CompanyId,
                 CompanyCode = company?.Code,
                 CompanyName = company?.Name,
-                TenantId = company?.TenantId,
+                TenantId = company?.TenantId ?? tokenEntity.User.TenantId,
                 Roles = tokenEntity.User.UserRoles.Select(ur => ur.Role.Name).ToList()
             };
         }
@@ -146,7 +144,7 @@ namespace AuthService.Services
             return false;
         }
 
-        public async Task<bool> RegisterAsync(string username, string password, Guid? companyId = null)
+        public async Task<bool> RegisterAsync(string username, string password, int tenantId = 0)
         {
             if (await _context.Users.AnyAsync(u => u.Username == username))
                 return false;
@@ -155,7 +153,7 @@ namespace AuthService.Services
             {
                 Username = username,
                 PasswordHash = HashPassword(password),
-                CompanyId = companyId
+                TenantId = tenantId
             };
 
             _context.Users.Add(user);
@@ -198,16 +196,17 @@ namespace AuthService.Services
                 new(ClaimTypes.Name, user.Username)
             };
 
-            if (user.CompanyId.HasValue)
-                claims.Add(new("CompanyId", user.CompanyId.Value.ToString()));
-
             if (company != null)
             {
                 claims.Add(new("CompanyCode", company.Code));
                 if (company.TenantId.HasValue)
                     claims.Add(new("TenantId", company.TenantId.Value.ToString()));
             }
-
+            else if (user.TenantId > 0)
+            {
+                claims.Add(new("TenantId", user.TenantId.ToString()));
+            }
+          
             foreach (var role in user.UserRoles)
                 claims.Add(new(ClaimTypes.Role, role.Role.Name));
 

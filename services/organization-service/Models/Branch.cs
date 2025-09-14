@@ -8,7 +8,7 @@ public class Branch : BaseEntity
     public string Code { get; set; } = null!;
     public string Name { get; set; } = null!;
     public string Address { get; set; } = null!;
-    public int CompanyId { get; set; }
+   
     public Company Company { get; set; } = null!;
     public ICollection<Division> Divisions { get; set; } = new List<Division>();
 }

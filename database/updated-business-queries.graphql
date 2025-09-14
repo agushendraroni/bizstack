@@ -1,0 +1,437 @@
+# Updated Business Queries for TenantId Architecture
+# All queries now use TenantId for multi-tenant data isolation
+
+# ===== AUTHENTICATION & TENANT MANAGEMENT =====
+
+# Login with Company Code (returns TenantId)
+mutation Login($companyCode: String!, $username: String!, $password: String!) {
+  AuthService_postAuthControllerLogin(
+    loginRequest: {
+      companyCode: $companyCode
+      username: $username
+      password: $password
+    }
+  ) {
+    data {
+      accessToken
+      refreshToken
+      tenantId
+      companyCode
+      companyName
+      username
+      roles
+    }
+    isSuccess
+    message
+  }
+}
+
+# Get Company by TenantId
+query GetCompanyByTenantId($tenantId: Int!) {
+  OrganizationService_getCompaniesControllerGetCompany(id: $tenantId) {
+    data {
+      tenantId
+      code
+      name
+      address
+      phone
+      email
+      website
+    }
+    isSuccess
+  }
+}
+
+# ===== DASHBOARD QUERIES =====
+
+# Business Dashboard (Tenant-specific)
+query BusinessDashboard {
+  ReportService_getReportsControllerGetDashboard {
+    data {
+      todaySales
+      todayOrders
+      totalCustomers
+      lowStockProducts
+      monthlyRevenue
+      topProducts
+    }
+    isSuccess
+  }
+}
+
+# Sales Analytics by Tenant
+query SalesAnalytics($startDate: String!, $endDate: String!) {
+  ReportService_getReportsControllerGetSalesReport(
+    startDate: $startDate
+    endDate: $endDate
+  ) {
+    data {
+      totalSales
+      totalOrders
+      averageOrderValue
+      salesByDay
+      topCustomers
+    }
+    isSuccess
+  }
+}
+
+# ===== CUSTOMER MANAGEMENT =====
+
+# Get All Customers (Tenant-filtered)
+query GetCustomers($page: Int = 1, $limit: Int = 10) {
+  CustomerService_getCustomersControllerGetCustomers(
+    page: $page
+    limit: $limit
+  ) {
+    data {
+      id
+      name
+      email
+      phone
+      address
+      tenantId
+      createdAt
+    }
+    isSuccess
+  }
+}
+
+# Create Customer (Auto-uses TenantId from JWT)
+mutation CreateCustomer($customer: CustomerCreateInput!) {
+  CustomerService_postCustomersControllerCreateCustomer(
+    createCustomerDto: $customer
+  ) {
+    data {
+      id
+      name
+      email
+      phone
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# ===== PRODUCT MANAGEMENT =====
+
+# Get Products (Tenant-filtered)
+query GetProducts($page: Int = 1, $limit: Int = 10) {
+  ProductService_getProductsControllerGetProducts(
+    page: $page
+    limit: $limit
+  ) {
+    data {
+      id
+      name
+      description
+      price
+      stock
+      category
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# Low Stock Alert (Tenant-specific)
+query LowStockProducts($threshold: Int = 10) {
+  ProductService_getProductsControllerGetLowStock(threshold: $threshold) {
+    data {
+      id
+      name
+      currentStock
+      minimumStock
+      category
+    }
+    isSuccess
+  }
+}
+
+# Create Product
+mutation CreateProduct($product: ProductCreateInput!) {
+  ProductService_postProductsControllerCreateProduct(
+    createProductDto: $product
+  ) {
+    data {
+      id
+      name
+      price
+      stock
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# ===== TRANSACTION PROCESSING =====
+
+# Process Sale/Order
+mutation ProcessSale($order: OrderCreateInput!) {
+  TransactionService_postOrdersControllerCreateOrder(
+    createOrderDto: $order
+  ) {
+    data {
+      id
+      customerId
+      total
+      status
+      items {
+        productId
+        quantity
+        price
+        subtotal
+      }
+      tenantId
+      createdAt
+    }
+    isSuccess
+  }
+}
+
+# Get Orders (Tenant-filtered)
+query GetOrders($page: Int = 1, $limit: Int = 10, $status: String) {
+  TransactionService_getOrdersControllerGetOrders(
+    page: $page
+    limit: $limit
+    status: $status
+  ) {
+    data {
+      id
+      customerId
+      customerName
+      total
+      status
+      tenantId
+      createdAt
+    }
+    isSuccess
+  }
+}
+
+# ===== ORGANIZATION STRUCTURE =====
+
+# Get Company Branches (by TenantId)
+query GetBranches {
+  OrganizationService_getBranchesControllerGetBranches {
+    data {
+      id
+      name
+      address
+      phone
+      tenantId
+      isActive
+    }
+    isSuccess
+  }
+}
+
+# Get Company Divisions (by TenantId)
+query GetDivisions {
+  OrganizationService_getDivisionsControllerGetDivisions {
+    data {
+      id
+      name
+      description
+      tenantId
+      isActive
+    }
+    isSuccess
+  }
+}
+
+# ===== USER MANAGEMENT =====
+
+# Get Users (Tenant-filtered)
+query GetUsers {
+  UserService_getUsersControllerGetUsers {
+    data {
+      id
+      username
+      email
+      fullName
+      tenantId
+      isActive
+      roles
+    }
+    isSuccess
+  }
+}
+
+# Create User (Auto-assigns current TenantId)
+mutation CreateUser($user: UserCreateInput!) {
+  UserService_postUsersControllerCreateUser(
+    createUserDto: $user
+  ) {
+    data {
+      id
+      username
+      email
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# ===== NOTIFICATIONS =====
+
+# Send Notification (Tenant-scoped)
+mutation SendNotification($notification: NotificationInput!) {
+  NotificationService_postNotificationsControllerSendNotification(
+    notificationDto: $notification
+  ) {
+    data {
+      id
+      message
+      type
+      status
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# ===== FILE MANAGEMENT =====
+
+# Upload File (Tenant-scoped)
+mutation UploadFile($file: Upload!, $category: String!) {
+  FileStorageService_postFilesControllerUploadFile(
+    file: $file
+    category: $category
+  ) {
+    data {
+      id
+      fileName
+      filePath
+      fileSize
+      category
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# ===== SETTINGS =====
+
+# Get Tenant Settings
+query GetSettings {
+  SettingsService_getSettingsControllerGetSettings {
+    data {
+      id
+      key
+      value
+      category
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# Update Setting
+mutation UpdateSetting($setting: SettingUpdateInput!) {
+  SettingsService_putSettingsControllerUpdateSetting(
+    updateSettingDto: $setting
+  ) {
+    data {
+      id
+      key
+      value
+      tenantId
+    }
+    isSuccess
+  }
+}
+
+# ===== BUSINESS WORKFLOW QUERIES =====
+
+# Complete Business Flow: Customer Order Processing
+mutation CompleteOrderFlow($customerId: String!, $items: [OrderItemInput!]!) {
+  # Step 1: Create Order
+  order: TransactionService_postOrdersControllerCreateOrder(
+    createOrderDto: {
+      customerId: $customerId
+      items: $items
+    }
+  ) {
+    data {
+      id
+      total
+      status
+    }
+    isSuccess
+  }
+  
+  # Step 2: Update Inventory (handled automatically by service)
+  # Step 3: Send Confirmation (handled by n8n workflow)
+}
+
+# Multi-Service Dashboard Data
+query CompleteDashboard {
+  # Sales Data
+  sales: ReportService_getReportsControllerGetDashboard {
+    data {
+      todaySales
+      todayOrders
+    }
+  }
+  
+  # Customer Count
+  customers: CustomerService_getCustomersControllerGetCustomerCount {
+    data {
+      totalCustomers
+      newCustomersToday
+    }
+  }
+  
+  # Product Alerts
+  lowStock: ProductService_getProductsControllerGetLowStock(threshold: 5) {
+    data {
+      id
+      name
+      currentStock
+    }
+  }
+  
+  # Recent Orders
+  recentOrders: TransactionService_getOrdersControllerGetOrders(
+    page: 1
+    limit: 5
+  ) {
+    data {
+      id
+      customerName
+      total
+      status
+      createdAt
+    }
+  }
+}
+
+# ===== INPUT TYPES (for reference) =====
+
+# input CustomerCreateInput {
+#   name: String!
+#   email: String!
+#   phone: String
+#   address: String
+# }
+
+# input ProductCreateInput {
+#   name: String!
+#   description: String
+#   price: Float!
+#   stock: Int!
+#   category: String
+# }
+
+# input OrderCreateInput {
+#   customerId: String!
+#   items: [OrderItemInput!]!
+#   notes: String
+# }
+
+# input OrderItemInput {
+#   productId: String!
+#   quantity: Int!
+#   price: Float!
+# }

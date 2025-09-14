@@ -1,7 +1,5 @@
-import { menuApi } from '../api';
-
-// Dynamic menu loader using GraphQL API
-export default async function() {
+// Static menu loader
+export default function() {
   // Get company code from URL or localStorage
   const getCompanyCode = () => {
     const path = window.location.pathname;
@@ -13,27 +11,6 @@ export default async function() {
   };
   
   const companyCode = getCompanyCode();
-  
-  // Try to load menu from API
-  try {
-    const menuResult = await menuApi.getMenuTree('main');
-    if (menuResult.success && menuResult.data.length > 0) {
-      // Transform API menu to sidebar format
-      return menuResult.data.map(item => ({
-        title: item.title,
-        to: item.to ? `/${companyCode}${item.to}` : '#',
-        htmlBefore: `<i class="${item.icon || 'fas fa-circle'}"></i>`,
-        htmlAfter: '',
-        items: item.items ? item.items.map(subItem => ({
-          title: subItem.title,
-          to: `/${companyCode}${subItem.to}`,
-          htmlBefore: `<i class="fas fa-angle-right"></i>`
-        })) : undefined
-      }));
-    }
-  } catch (error) {
-    console.warn('Failed to load menu from API, using fallback:', error);
-  }
   
   // Fallback static menu
   return [

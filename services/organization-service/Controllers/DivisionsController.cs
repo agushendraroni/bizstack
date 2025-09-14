@@ -47,11 +47,11 @@ public class DivisionsController : ControllerBase
         return Ok(ApiResponse<Division>.Success(division));
     }
 
-    [HttpGet("company/{companyId}")]
-    public async Task<IActionResult> GetDivisionsByCompany(int companyId)
+    [HttpGet("company/{tenantId}")]
+    public async Task<IActionResult> GetDivisionsByCompany(int tenantId)
     {
         var divisions = await _context.Divisions
-            .Where(d => d.CompanyId == companyId)
+            .Where(d => d.TenantId == tenantId)
             .Include(d => d.Company)
             .ToListAsync();
         
@@ -65,8 +65,7 @@ public class DivisionsController : ControllerBase
         var division = new Division
         {
             Name = dto.Name,
-            CompanyId = dto.CompanyId,
-            TenantId = tenantId
+            TenantId = dto.TenantId ?? tenantId ?? 0
         };
 
         _context.Divisions.Add(division);
@@ -110,7 +109,7 @@ public class DivisionsController : ControllerBase
 public class CreateDivisionDto
 {
     public string Name { get; set; } = string.Empty;
-    public int CompanyId { get; set; }
+    public int? TenantId { get; set; }
 }
 
 public class UpdateDivisionDto

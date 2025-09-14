@@ -9,8 +9,6 @@ namespace AuthService.Models
         public string Name { get; set; } = default!;
         
         public string? Description { get; set; }
-        
-        public Guid? CompanyId { get; set; }
 
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();

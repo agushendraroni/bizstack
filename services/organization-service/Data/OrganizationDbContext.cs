@@ -45,7 +45,7 @@ public class OrganizationDbContext : DbContext
             entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
             entity.HasOne(b => b.Company)
                   .WithMany(c => c.Branches)
-                  .HasForeignKey(b => b.CompanyId)
+                  .HasForeignKey(b => b.TenantId)
                   .HasPrincipalKey(c => c.TenantId);
         });
 
@@ -56,7 +56,7 @@ public class OrganizationDbContext : DbContext
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.HasOne(d => d.Company)
                   .WithMany()
-                  .HasForeignKey(d => d.CompanyId)
+                  .HasForeignKey(d => d.TenantId)
                   .HasPrincipalKey(c => c.TenantId);
         });
 
@@ -80,6 +80,9 @@ public class OrganizationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+            entity.HasOne(cc => cc.Division)
+                  .WithMany(d => d.CostCenters)
+                  .HasForeignKey(cc => cc.DivisionId);
         });
 
         // LegalDocument configuration
@@ -90,7 +93,7 @@ public class OrganizationDbContext : DbContext
             entity.Property(e => e.DocumentNumber).IsRequired().HasMaxLength(100);
             entity.HasOne(l => l.Company)
                   .WithMany(c => c.LegalDocuments)
-                  .HasForeignKey(l => l.CompanyId)
+                  .HasForeignKey(l => l.TenantId)
                   .HasPrincipalKey(c => c.TenantId);
         });
     }

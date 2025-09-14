@@ -18,9 +18,6 @@ namespace AuthService.Models
 
         // Reference to User Service
         public Guid? UserProfileId { get; set; }
-        
-        // Reference to Organization Service  
-        public Guid? CompanyId { get; set; }
 
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

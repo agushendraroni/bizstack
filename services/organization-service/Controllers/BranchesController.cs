@@ -43,11 +43,11 @@ public class BranchesController : ControllerBase
         return Ok(ApiResponse<Branch>.Success(branch));
     }
 
-    [HttpGet("company/{companyId}")]
-    public async Task<IActionResult> GetBranchesByCompany(int companyId)
+    [HttpGet("company/{tenantId}")]
+    public async Task<IActionResult> GetBranchesByCompany(int tenantId)
     {
         var branches = await _context.Branches
-            .Where(b => b.CompanyId == companyId)
+            .Where(b => b.TenantId == tenantId)
             .Include(b => b.Company)
             .ToListAsync();
         
@@ -62,7 +62,7 @@ public class BranchesController : ControllerBase
             Code = dto.Code,
             Name = dto.Name,
             Address = dto.Address,
-            CompanyId = dto.CompanyId
+            TenantId = dto.TenantId
         };
 
         _context.Branches.Add(branch);
@@ -105,7 +105,7 @@ public class CreateBranchDto
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
-    public int CompanyId { get; set; }
+    public int TenantId { get; set; }
 }
 
 public class UpdateBranchDto
