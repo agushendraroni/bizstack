@@ -1,7 +1,7 @@
 // API Client for REST endpoints
 class ApiClient {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api/v1.0';
+    this.baseURL = `${process.env.REACT_APP_AUTH_SERVICE}/api/${process.env.REACT_APP_API_VERSION}`;
     this.token = localStorage.getItem('accessToken');
   }
 

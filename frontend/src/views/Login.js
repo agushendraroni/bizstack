@@ -90,8 +90,11 @@ const Login = ({ history, match }) => {
       const result = await AuthAPI.login(loginData);
       
       if (result.success) {
-        // Store company code and redirect to company dashboard
+        // Store company code, token and redirect to company dashboard
         localStorage.setItem('companyCode', companyCode.toUpperCase());
+        if (result.data && result.data.accessToken) {
+          localStorage.setItem('accessToken', result.data.accessToken);
+        }
         history.push(`/${companyCode.toUpperCase()}/dashboard`);
       } else {
         setError(result.message || "Invalid username or password");

@@ -10,54 +10,72 @@ sources:
       openapi:
         source: http://localhost:5002/swagger/v1/swagger.json
         endpoint: http://localhost:5002
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: OrganizationService
     handler:
       openapi:
         source: http://localhost:5003/swagger/v1/swagger.json
         endpoint: http://localhost:5003
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: ProductService
     handler:
       openapi:
         source: http://localhost:5004/swagger/v1/swagger.json
         endpoint: http://localhost:5004
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: CustomerService
     handler:
       openapi:
         source: http://localhost:5005/swagger/v1/swagger.json
         endpoint: http://localhost:5005
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: TransactionService
     handler:
       openapi:
         source: http://localhost:5006/swagger/v1/swagger.json
         endpoint: http://localhost:5006
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: ReportService
     handler:
       openapi:
         source: http://localhost:5007/swagger/v1/swagger.json
         endpoint: http://localhost:5007
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: NotificationService
     handler:
       openapi:
         source: http://localhost:5008/swagger/v1/swagger.json
         endpoint: http://localhost:5008
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: FileStorageService
     handler:
       openapi:
         source: http://localhost:5009/swagger/v1/swagger.json
         endpoint: http://localhost:5009
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
   
   - name: SettingsService
     handler:
       openapi:
         source: http://localhost:5010/swagger/v1/swagger.json
         endpoint: http://localhost:5010
+        operationHeaders:
+          Authorization: "{context.headers['authorization']}"
 
 additionalTypeDefs: |
   type BusinessDashboard {

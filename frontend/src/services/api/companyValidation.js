@@ -1,3 +1,5 @@
+import API_CONFIG from '../../config/apiConfig';
+
 const CompanyValidationService = {
   async getCompanyDetails(companyCode) {
     if (!companyCode) {
@@ -5,7 +7,7 @@ const CompanyValidationService = {
     }
 
     try {
-      const response = await fetch(`http://localhost:5003/api/v1.0/companies/code/${companyCode}`);
+      const response = await fetch(`${API_CONFIG.getServiceUrl('organization')}/companies/code/${companyCode}`);
       
       if (!response.ok) {
         return { success: false, error: 'Company not found' };

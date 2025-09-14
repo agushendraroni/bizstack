@@ -1,7 +1,7 @@
 const config = {
-  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:4000/graphql',
-  authUrl: process.env.REACT_APP_AUTH_URL || 'http://localhost:5001',
-  n8nUrl: process.env.REACT_APP_N8N_URL || 'http://localhost:5678',
+  apiUrl: process.env.REACT_APP_GRAPHQL_ENDPOINT,
+  authUrl: process.env.REACT_APP_AUTH_SERVICE,
+  n8nUrl: process.env.REACT_APP_N8N_ENDPOINT,
   environment: process.env.REACT_APP_ENVIRONMENT || 'development',
   isDevelopment: process.env.REACT_APP_ENVIRONMENT === 'development',
   isProduction: process.env.REACT_APP_ENVIRONMENT === 'production'

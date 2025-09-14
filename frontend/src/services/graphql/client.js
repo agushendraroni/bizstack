@@ -1,5 +1,7 @@
 // GraphQL Client for BizStack
-const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql';
+import API_CONFIG from '../../config/apiConfig';
+
+const GRAPHQL_ENDPOINT = API_CONFIG.GRAPHQL_ENDPOINT;
 
 class GraphQLClient {
   constructor(endpoint = GRAPHQL_ENDPOINT) {
@@ -8,11 +10,18 @@ class GraphQLClient {
 
   async query(query, variables = {}) {
     try {
+      const token = localStorage.getItem('accessToken');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(this.endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           query,
           variables
@@ -87,6 +96,52 @@ class GraphQLClient {
     
     const result = await this.query(query);
     return result.api_Companies;
+  }
+
+  async getPublicCompanies() {
+    const query = `
+      query GetPublicCompanies {
+        api_Companies_public_list {
+          isSuccess
+          message
+          data {
+            tenantId
+            name
+            code
+            description
+            address
+            phone
+            email
+            website
+            isActive
+            createdAt
+          }
+        }
+      }
+    `;
+    
+    // Don't send auth header for public endpoint
+    const response = await fetch(this.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.errors) {
+      throw new Error(result.errors[0].message);
+    }
+
+    return result.data.api_Companies_public_list;
   }
 }
 

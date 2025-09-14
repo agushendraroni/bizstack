@@ -1,21 +1,21 @@
 // API Configuration for BizStack Services
 // Using GraphQL Mesh for unified API access
 
-const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql';
-const API_VERSION = 'v1.0'; // Explicitly define API version for all services
+const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_ENDPOINT;
+const API_VERSION = process.env.REACT_APP_API_VERSION;
 
 const API_BASE_URLS = {
-  graphql: 'http://localhost:4000',
-  auth: 'http://localhost:5001',
-  user: 'http://localhost:5002', 
-  organization: 'http://localhost:5003',
-  product: 'http://localhost:5004',
-  customer: 'http://localhost:5005',
-  transaction: 'http://localhost:5006',
-  report: 'http://localhost:5007',
-  notification: 'http://localhost:5008',
-  fileStorage: 'http://localhost:5009',
-  settings: 'http://localhost:5010'
+  graphql: process.env.REACT_APP_GRAPHQL_ENDPOINT?.replace('/graphql', ''),
+  auth: process.env.REACT_APP_AUTH_SERVICE,
+  user: process.env.REACT_APP_USER_SERVICE,
+  organization: process.env.REACT_APP_ORGANIZATION_SERVICE,
+  product: process.env.REACT_APP_PRODUCT_SERVICE,
+  customer: process.env.REACT_APP_CUSTOMER_SERVICE,
+  transaction: process.env.REACT_APP_TRANSACTION_SERVICE,
+  report: process.env.REACT_APP_REPORT_SERVICE,
+  notification: process.env.REACT_APP_NOTIFICATION_SERVICE,
+  fileStorage: process.env.REACT_APP_FILE_STORAGE_SERVICE,
+  settings: process.env.REACT_APP_SETTINGS_SERVICE
 };
 
 // API Endpoints with versioning

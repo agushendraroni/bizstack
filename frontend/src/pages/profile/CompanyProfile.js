@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, CardHeader, CardBody, Button, Form, FormInput, Alert } from "shards-react";
+import API_CONFIG from '../../config/apiConfig';
 
 const CompanyProfile = () => {
   const [company, setCompany] = useState(null);
@@ -24,7 +25,7 @@ const CompanyProfile = () => {
   const loadCompanyProfile = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/graphql', {
+      const response = await fetch(API_CONFIG.GRAPHQL_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

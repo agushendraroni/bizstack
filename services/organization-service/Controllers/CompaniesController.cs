@@ -44,6 +44,15 @@ public class CompaniesController : ControllerBase
         return result.IsSuccess ? Ok(result) : NotFound(result);
     }
 
+    [HttpGet("public/list")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPublicCompanies()
+    {
+        // For company selection - return all active companies without auth
+        var result = await _companyService.GetAllCompaniesAsync(null);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateCompany([FromBody] CreateCompanyDto createCompanyDto)
     {

@@ -87,21 +87,25 @@ class CompanySelector extends React.Component {
 
   render() {
     return (
-      <div className="auth-wrapper">
+      <div className="min-vh-100 d-flex align-items-center bg-light">
         <Container>
           <Row className="justify-content-center">
             <Col lg="5" md="7">
-              <Card className="auth-card">
-                <CardHeader className="text-center">
-                  <h1 className="company-title">BizStack</h1>
-                  <p className="company-subtitle">Enter your company code to continue</p>
+              <Card className="shadow">
+                <CardHeader className="bg-primary text-white text-center">
+                  <div className="py-3">
+                    <h4 className="mb-1">BizStack</h4>
+                    <p className="mb-0 opacity-75">Enter your company code to continue</p>
+                  </div>
                 </CardHeader>
                 
-                <CardBody>
+                <CardBody className="p-4">
                   <Form onSubmit={this.handleSubmit}>
                     <div className="mb-4">
+                      <label htmlFor="companyCode">Company Code</label>
                       <FormInput
-                        placeholder="Company Code"
+                        id="companyCode"
+                        placeholder="Enter your company code"
                         value={this.state.companyCode}
                         onChange={(e) => this.setState({ companyCode: e.target.value })}
                         required
@@ -109,11 +113,12 @@ class CompanySelector extends React.Component {
                       />
                     </div>
 
-                    <div className="remember-checkbox">
+                    <div className="mb-4">
                       <FormCheckbox
                         checked={this.state.rememberCompany}
                         onChange={(e) => this.setState({ rememberCompany: e.target.checked })}
                       >
+                        <i className="fas fa-bookmark mr-2"></i>
                         Remember this company code
                       </FormCheckbox>
                     </div>
@@ -121,31 +126,54 @@ class CompanySelector extends React.Component {
                     <Button 
                       type="submit" 
                       theme="primary" 
+                      size="lg"
                       block
                       disabled={!this.state.companyCode.trim() || this.state.loading}
                     >
-                      {this.state.loading ? 'Validating...' : 'Continue'}
+                      {this.state.loading ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin mr-2"></i>
+                          Validating...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-arrow-right mr-2"></i>
+                          Continue
+                        </>
+                      )}
                     </Button>
                   </Form>
 
                   {this.state.error && (
                     <div className="alert alert-danger mt-3" role="alert">
+                      <i className="fas fa-exclamation-triangle mr-2"></i>
                       {this.state.error}
                     </div>
                   )}
 
-                  <div className="valid-companies">
-                    <div className="text-muted text-center">
-                      <small>Valid company codes:</small>
-                      <div className="mt-2">
-                        <code className="mr-2">demo</code>
-                        <code className="mr-2">test</code>
-                        <code className="mr-2">bizstack</code>
+                  <div className="mt-4">
+                    <div className="p-3 bg-light rounded">
+                      <h6 className="mb-2">
+                        <i className="fas fa-info-circle mr-2"></i>
+                        Available Companies
+                      </h6>
+                      <div className="text-center">
+                        <code className="mr-2">DEMO</code>
+                        <code className="mr-2">TEST</code>
+                        <code className="mr-2">BLITZ</code>
                       </div>
                     </div>
                   </div>
                 </CardBody>
               </Card>
+
+              {/* Footer */}
+              <div className="text-center mt-4">
+                <small className="text-muted">
+                  <i className="fas fa-shield-alt mr-1"></i>
+                  Secure multi-tenant access powered by BizStack
+                </small>
+              </div>
             </Col>
           </Row>
         </Container>

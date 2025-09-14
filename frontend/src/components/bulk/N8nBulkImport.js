@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardBody, Button, FormInput, Alert } from "shards-react";
+import API_CONFIG from '../../config/apiConfig';
 
 const N8nBulkImport = ({ type, onComplete }) => {
   const [file, setFile] = useState(null);
@@ -8,8 +9,8 @@ const N8nBulkImport = ({ type, onComplete }) => {
   const [error, setError] = useState("");
 
   const N8N_WEBHOOKS = {
-    products: `${process.env.REACT_APP_N8N_ENDPOINT || 'http://localhost:5678'}/webhook/bulk-import-products`,
-    customers: `${process.env.REACT_APP_N8N_ENDPOINT || 'http://localhost:5678'}/webhook/bulk-import-customers`
+    products: API_CONFIG.getN8nWebhook('bulk-import-products'),
+    customers: API_CONFIG.getN8nWebhook('bulk-import-customers')
   };
 
   const handleFileChange = (e) => {
