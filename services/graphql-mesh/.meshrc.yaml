@@ -2,87 +2,99 @@ sources:
   - name: AuthService
     handler:
       openapi:
-        source: http://auth-service:5001/swagger/v1/swagger.json
+        source: http://localhost:5001/swagger/v1/swagger.json
+        endpoint: http://localhost:5001
   
   - name: UserService
     handler:
       openapi:
-        source: http://user-service:5002/swagger/v1/swagger.json
+        source: http://localhost:5002/swagger/v1/swagger.json
+        endpoint: http://localhost:5002
   
   - name: OrganizationService
     handler:
       openapi:
-        source: http://organization-service:5003/swagger/v1/swagger.json
+        source: http://localhost:5003/swagger/v1/swagger.json
+        endpoint: http://localhost:5003
   
   - name: ProductService
     handler:
       openapi:
-        source: http://product-service:5004/swagger/v1/swagger.json
+        source: http://localhost:5004/swagger/v1/swagger.json
+        endpoint: http://localhost:5004
   
   - name: CustomerService
     handler:
       openapi:
-        source: http://customer-service:5005/swagger/v1/swagger.json
+        source: http://localhost:5005/swagger/v1/swagger.json
+        endpoint: http://localhost:5005
   
   - name: TransactionService
     handler:
       openapi:
-        source: http://transaction-service:5006/swagger/v1/swagger.json
+        source: http://localhost:5006/swagger/v1/swagger.json
+        endpoint: http://localhost:5006
   
   - name: ReportService
     handler:
       openapi:
-        source: http://report-service:5007/swagger/v1/swagger.json
+        source: http://localhost:5007/swagger/v1/swagger.json
+        endpoint: http://localhost:5007
   
   - name: NotificationService
     handler:
       openapi:
-        source: http://notification-service:5008/swagger/v1/swagger.json
+        source: http://localhost:5008/swagger/v1/swagger.json
+        endpoint: http://localhost:5008
   
   - name: FileStorageService
     handler:
       openapi:
-        source: http://file-storage-service:5009/swagger/v1/swagger.json
+        source: http://localhost:5009/swagger/v1/swagger.json
+        endpoint: http://localhost:5009
   
   - name: SettingsService
     handler:
       openapi:
-        source: http://settings-service:5010/swagger/v1/swagger.json
+        source: http://localhost:5010/swagger/v1/swagger.json
+        endpoint: http://localhost:5010
 
 additionalTypeDefs: |
   type BusinessDashboard {
-    todaySales: Float!
-    totalCustomers: Int!
-    lowStockCount: Int!
-    pendingOrders: Int!
+    todaySales: Float
+    totalCustomers: Int
+    lowStockCount: Int
+    pendingOrders: Int
   }
-  
-  type QuickSaleResult {
+
+  type QuickSaleResponse {
     success: Boolean!
     orderId: String
-    message: String!
+    message: String
   }
-  
+
   input SaleItemInput {
     productId: String!
     quantity: Int!
     price: Float!
   }
-  
+
   extend type Query {
-    businessDashboard: BusinessDashboard!
+    businessDashboard: BusinessDashboard
+    healthCheck: String!
   }
-  
+
   extend type Mutation {
     processQuickSale(
       customerId: String!
       items: [SaleItemInput!]!
       paymentMethod: String!
-    ): QuickSaleResult!
+    ): QuickSaleResponse!
   }
 
 additionalResolvers:
   - ./resolvers/business-aggregates.js
+  - ./resolvers/health.js
 
 serve:
   port: 4000

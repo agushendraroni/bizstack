@@ -9,6 +9,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // API Versioning
 builder.Services.AddApiVersioning(options =>
 {
@@ -80,7 +91,7 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready");
 
-app.UseCors("AllowAll");
+app.UseCors();
 app.UseSecurityHeaders();
 app.UseRouting();
 app.UseTenantMiddleware();

@@ -2,6 +2,7 @@
 // Using GraphQL Mesh for unified API access
 
 const GRAPHQL_ENDPOINT = process.env.REACT_APP_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql';
+const API_VERSION = 'v1.0'; // Explicitly define API version for all services
 
 const API_BASE_URLS = {
   graphql: 'http://localhost:4000',
@@ -17,31 +18,31 @@ const API_BASE_URLS = {
   settings: 'http://localhost:5010'
 };
 
-// API Endpoints
+// API Endpoints with versioning
 export const API_ENDPOINTS = {
   // Auth Service
   auth: {
-    login: '/api/auth/login',
-    register: '/api/auth/register',
-    refresh: '/api/auth/refresh',
-    roles: '/api/Roles'
+    login: `/api/${API_VERSION}/auth/login`,
+    register: `/api/${API_VERSION}/auth/register`,
+    refresh: `/api/${API_VERSION}/auth/refresh`,
+    roles: `/api/${API_VERSION}/roles`
   },
   
   // User Service
   user: {
-    list: '/api/Users',
-    create: '/api/Users',
-    update: (id) => `/api/Users/${id}`,
-    delete: (id) => `/api/Users/${id}`,
-    getById: (id) => `/api/Users/${id}`
+    list: `/api/${API_VERSION}/users`,
+    create: `/api/${API_VERSION}/users`,
+    update: (id) => `/api/${API_VERSION}/users/${id}`,
+    delete: (id) => `/api/${API_VERSION}/users/${id}`,
+    getById: (id) => `/api/${API_VERSION}/users/${id}`
   },
   
   // Organization Service
   organization: {
-    companies: '/api/Companies',
-    createCompany: '/api/Companies',
-    updateCompany: (id) => `/api/Companies/${id}`,
-    deleteCompany: (id) => `/api/Companies/${id}`
+    companies: `/api/${API_VERSION}/companies`,
+    createCompany: `/api/${API_VERSION}/companies`,
+    updateCompany: (id) => `/api/${API_VERSION}/companies/${id}`,
+    deleteCompany: (id) => `/api/${API_VERSION}/companies/${id}`
   },
   
   // Product Service

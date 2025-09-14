@@ -204,10 +204,10 @@ const Login = ({ history, match }) => {
                   </Form>
                 )}
 
-                {/* Default Credentials Info */}
+                {/* Default Credentials & Back Button */}
                 {companyInfo && (
-                  <>
-                    <div className="mt-4 p-3 bg-light rounded">
+                  <div className="mt-4">
+                    <div className="p-3 bg-light rounded">
                       <h6 className="mb-2">
                         <i className="fas fa-info-circle mr-2"></i>
                         Default Credentials
@@ -223,31 +223,23 @@ const Login = ({ history, match }) => {
                         </div>
                       </div>
                     </div>
-                    
 
-                  </>
-                )}
-
-                {/* Error State */}
-                {error && !companyInfo && (
-                  <div className="text-center py-4">
-                    <i className="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
-                    <h4 className="text-danger mb-3">{error}</h4>
-                    <p className="text-muted mb-4">Please check the company code and try again.</p>
-                    <Button
-                      theme="light"
-                      className="back-button"
-                      onClick={() => {
-                        CompanyStorage.forgetCompany();
-                        setCompanyInfo(null);
-                        setError("");
-                        setFormData({ username: "", password: "" });
-                        history.push('/select-company');
-                      }}
-                    >
-                      <i className="fas fa-arrow-left"></i>
-                      Back to Company Selection
-                    </Button>
+                    <div className="auth-actions mt-3">
+                      <Button
+                        theme="light"
+                        className="back-button"
+                        onClick={() => {
+                          CompanyStorage.forgetCompany();
+                          setCompanyInfo(null);
+                          setError("");
+                          setFormData({ username: "", password: "" });
+                          history.push('/select-company');
+                        }}
+                      >
+                        <i className="fas fa-arrow-left"></i>
+                        Back to Company Selection
+                      </Button>
+                    </div>
                   </div>
                 )}
 
