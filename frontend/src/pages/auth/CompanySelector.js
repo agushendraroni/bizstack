@@ -92,10 +92,10 @@ class CompanySelector extends React.Component {
           <Row className="justify-content-center">
             <Col lg="5" md="7">
               <Card className="shadow">
-                <CardHeader className="bg-primary text-white text-center">
+                <CardHeader className="bg-primary text-center">
                   <div className="py-3">
-                    <h4 className="mb-1">BizStack</h4>
-                    <p className="mb-0 opacity-75">Enter your company code to continue</p>
+                    <h4 className="mb-1 text-white">BizStack</h4>
+                    <p className="mb-0 text-white-50">Enter your company code to continue</p>
                   </div>
                 </CardHeader>
                 
@@ -114,13 +114,19 @@ class CompanySelector extends React.Component {
                     </div>
 
                     <div className="mb-4">
-                      <FormCheckbox
-                        checked={this.state.rememberCompany}
-                        onChange={(e) => this.setState({ rememberCompany: e.target.checked })}
-                      >
-                        <i className="fas fa-bookmark mr-2"></i>
-                        Remember this company code
-                      </FormCheckbox>
+                      <div className="custom-control custom-checkbox">
+                        <input
+                          type="checkbox"
+                          className="custom-control-input"
+                          id="rememberCompany"
+                          checked={this.state.rememberCompany}
+                          onChange={(e) => this.setState({ rememberCompany: e.target.checked })}
+                        />
+                        <label className="custom-control-label" htmlFor="rememberCompany">
+                          <i className="fas fa-bookmark mr-2"></i>
+                          Remember this company code
+                        </label>
+                      </div>
                     </div>
 
                     <Button 
@@ -151,19 +157,7 @@ class CompanySelector extends React.Component {
                     </div>
                   )}
 
-                  <div className="mt-4">
-                    <div className="p-3 bg-light rounded">
-                      <h6 className="mb-2">
-                        <i className="fas fa-info-circle mr-2"></i>
-                        Available Companies
-                      </h6>
-                      <div className="text-center">
-                        <code className="mr-2">DEMO</code>
-                        <code className="mr-2">TEST</code>
-                        <code className="mr-2">BLITZ</code>
-                      </div>
-                    </div>
-                  </div>
+
                 </CardBody>
               </Card>
 

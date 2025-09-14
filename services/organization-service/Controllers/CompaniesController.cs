@@ -15,10 +15,12 @@ namespace OrganizationService.Controllers;
 public class CompaniesController : ControllerBase
 {
     private readonly ICompanyService _companyService;
+    private readonly IConfiguration _configuration;
 
-    public CompaniesController(ICompanyService companyService)
+    public CompaniesController(ICompanyService companyService, IConfiguration configuration)
     {
         _companyService = companyService;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -40,6 +42,12 @@ public class CompaniesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetCompanyByCode(string code)
     {
+        // Validate origin for security
+        if (!IsValidOrigin())
+        {
+            return Forbid("Invalid origin");
+        }
+        
         var result = await _companyService.GetCompanyByCodeAsync(code);
         return result.IsSuccess ? Ok(result) : NotFound(result);
     }
@@ -48,6 +56,12 @@ public class CompaniesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetPublicCompanies()
     {
+        // Validate origin for security
+        if (!IsValidOrigin())
+        {
+            return Forbid("Invalid origin");
+        }
+        
         // For company selection - return all active companies without auth
         var result = await _companyService.GetAllCompaniesAsync(null);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
@@ -84,5 +98,24 @@ public class CompaniesController : ControllerBase
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
+    }
+
+    private bool IsValidOrigin()
+    {
+        var origin = Request.Headers["Origin"].FirstOrDefault();
+        var referer = Request.Headers["Referer"].FirstOrDefault();
+        var userAgent = Request.Headers["User-Agent"].FirstOrDefault();
+        
+        var allowedOrigins = _configuration.GetSection("Security:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+        
+        // Allow if origin/referer matches OR if it's a GraphQL mesh request
+        var isValidOrigin = allowedOrigins.Any(allowed => 
+            origin?.StartsWith(allowed) == true || 
+            referer?.StartsWith(allowed) == true);
+            
+        // Also allow if User-Agent indicates GraphQL mesh
+        var isGraphQLMesh = userAgent?.Contains("graphql-mesh") == true;
+        
+        return isValidOrigin || isGraphQLMesh;
     }
 }
