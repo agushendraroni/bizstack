@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { withRouter } from "react-router-dom";
-import { Container, Row, Col, Card, CardHeader, CardBody, Button, Form, FormInput, Alert } from "shards-react";
+import { Container, Row, Col, Card, CardHeader, CardBody, Button, Form, FormInput, Alert, ButtonGroup } from "shards-react";
 import AuthAPI from "../api/auth/authApi";
+import CompanyStorage from "../utils/companyStorage";
+import "./Login.css";
 
 const Login = ({ history, match }) => {
   const { companyCode } = match.params;
@@ -30,19 +32,40 @@ const Login = ({ history, match }) => {
       const normalizedCode = code.toUpperCase();
       
       // Mock company lookup - in real app, call API with case-insensitive search
-      if (normalizedCode === 'BLITZ') {
-        setCompanyInfo({
-          code: 'BLITZ', // Always store in uppercase
+      const validCompanies = {
+        'TEST': {
+          code: 'TEST',
+          name: 'PT Test Company',
+          description: 'Test Company Description',
+          logo: '/images/test-logo.png'
+        },
+        'DEMO': {
+          code: 'DEMO',
+          name: 'PT Demo Company',
+          description: 'Demo Company Description',
+          logo: '/images/demo-logo.png'
+        },
+        'BLITZ': {
+          code: 'BLITZ',
           name: 'PT Blitz Technology Indonesia',
           description: 'Leading business technology solutions provider',
           logo: '/images/blitz-logo.png'
-        });
+        }
+      };
+
+      const company = validCompanies[normalizedCode];
+      if (company) {
+        setCompanyInfo(company);
       } else {
         setError(`Company "${code}" not found`);
       }
     } catch (err) {
       setError("Failed to load company information");
     }
+  };
+
+  const handleBackToSelector = () => {
+    history.push('/select-company');
   };
 
   // Form handlers
@@ -183,25 +206,52 @@ const Login = ({ history, match }) => {
 
                 {/* Default Credentials Info */}
                 {companyInfo && (
-                  <div className="mt-4 p-3 bg-light rounded">
-                    <h6 className="mb-2">
-                      <i className="fas fa-info-circle mr-2"></i>
-                      Default Credentials
-                    </h6>
-                    <div className="row">
-                      <div className="col-6">
-                        <small className="text-muted">Username:</small>
-                        <div><code>admin</code></div>
-                      </div>
-                      <div className="col-6">
-                        <small className="text-muted">Password:</small>
-                        <div><code>admin123</code></div>
+                  <>
+                    <div className="mt-4 p-3 bg-light rounded">
+                      <h6 className="mb-2">
+                        <i className="fas fa-info-circle mr-2"></i>
+                        Default Credentials
+                      </h6>
+                      <div className="row">
+                        <div className="col-6">
+                          <small className="text-muted">Username:</small>
+                          <div><code>admin</code></div>
+                        </div>
+                        <div className="col-6">
+                          <small className="text-muted">Password:</small>
+                          <div><code>admin123</code></div>
+                        </div>
                       </div>
                     </div>
+                    
+
+                  </>
+                )}
+
+                {/* Error State */}
+                {error && !companyInfo && (
+                  <div className="text-center py-4">
+                    <i className="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <h4 className="text-danger mb-3">{error}</h4>
+                    <p className="text-muted mb-4">Please check the company code and try again.</p>
+                    <Button
+                      theme="light"
+                      className="back-button"
+                      onClick={() => {
+                        CompanyStorage.forgetCompany();
+                        setCompanyInfo(null);
+                        setError("");
+                        setFormData({ username: "", password: "" });
+                        history.push('/select-company');
+                      }}
+                    >
+                      <i className="fas fa-arrow-left"></i>
+                      Back to Company Selection
+                    </Button>
                   </div>
                 )}
 
-                {/* Company Not Found */}
+                {/* Loading State */}
                 {!companyInfo && companyCode && !error && (
                   <div className="text-center py-4">
                     <i className="fas fa-search fa-2x text-muted mb-3"></i>

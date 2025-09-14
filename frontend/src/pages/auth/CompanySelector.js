@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, CardBody, Form, FormInput, Button, FormCheckbox } from "shards-react";
+import { Container, Row, Col, Card, CardHeader, CardBody, Form, FormInput, Button, FormCheckbox } from "shards-react";
 import CompanyStorage from "../../utils/companyStorage";
+
+// Import required styles
+import "bootstrap/dist/css/bootstrap.min.css";
+import "../../shards-dashboard/styles/shards-dashboards.1.1.0.min.css";
+import "./CompanySelector.css";
 
 const CompanySelector = () => {
   const [companyCode, setCompanyCode] = useState("");
@@ -11,7 +16,7 @@ const CompanySelector = () => {
   useEffect(() => {
     // Check if company code is remembered and auto-redirect
     const rememberedCompany = CompanyStorage.getRememberedCompany();
-    if (rememberedCompany && CompanyStorage.isValidCompany(rememberedCompany)) {
+    if (rememberedCompany) {
       window.location.href = `/${rememberedCompany}/login`;
       return;
     }
@@ -30,29 +35,24 @@ const CompanySelector = () => {
     const code = companyCode.trim().toLowerCase();
     setLoading(true);
     
-    try {
-      // Validate company code with backend
-      const isValid = await CompanyStorage.isValidCompany(code);
-      
-      if (!isValid) {
-        setError(`Company code "${code}" not found. Please check your company code.`);
-        setLoading(false);
-        return;
-      }
-
-      // Save company code if remember is checked
-      if (rememberCompany) {
-        CompanyStorage.setRememberedCompany(code);
-      } else {
-        CompanyStorage.forgetCompany();
-      }
-
-      // Redirect to company login
-      window.location.href = `/${code}/login`;
-    } catch (error) {
-      setError('Unable to validate company code. Please try again.');
+    // Simple validation using static list
+    const validCompanies = ['demo', 'test', 'bizstack', 'company1', 'company2', 'blitz'];
+    
+    if (!validCompanies.includes(code)) {
+      setError(`Company code "${code}" not found. Valid codes: ${validCompanies.join(', ')}`);
       setLoading(false);
+      return;
     }
+
+    // Save company code if remember is checked
+    if (rememberCompany) {
+      CompanyStorage.setRememberedCompany(code);
+    } else {
+      CompanyStorage.forgetCompany();
+    }
+
+    // Redirect to company login
+    window.location.href = `/${code}/login`;
   };
 
   const handleForgetCompany = () => {
@@ -76,31 +76,35 @@ const CompanySelector = () => {
   }
 
   return (
-    <div className="min-vh-100 d-flex align-items-center bg-light">
+    <div className="auth-wrapper">
       <Container>
         <Row className="justify-content-center">
           <Col lg="5" md="7">
-            <Card className="shadow">
-              <CardBody className="p-5 text-center">
-                <div className="mb-4">
-                  <h2 className="text-primary">BizStack</h2>
-                  <p className="text-muted">Enter your company code to continue</p>
-                </div>
-
+            <Card className="auth-card">
+              <CardHeader className="text-center">
+                <img
+                  src="/images/bizstack-logo.png"
+                  alt="BizStack"
+                  className="auth-logo"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+                <h1 className="company-title">BizStack</h1>
+                <p className="company-subtitle">Enter your company code to continue</p>
+              </CardHeader>
+              
+              <CardBody>
                 <Form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <FormInput
-                      size="lg"
                       placeholder="Company Code"
                       value={companyCode}
                       onChange={(e) => setCompanyCode(e.target.value)}
                       required
-                      className="text-center"
                       autoFocus
                     />
                   </div>
 
-                  <div className="mb-4">
+                  <div className="remember-checkbox">
                     <FormCheckbox
                       checked={rememberCompany}
                       onChange={(e) => setRememberCompany(e.target.checked)}
@@ -112,11 +116,17 @@ const CompanySelector = () => {
                   <Button 
                     type="submit" 
                     theme="primary" 
-                    size="lg" 
                     block
                     disabled={!companyCode.trim() || loading}
                   >
-                    {loading ? 'Validating...' : 'Continue'}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+                        Validating...
+                      </>
+                    ) : (
+                      'Continue'
+                    )}
                   </Button>
                 </Form>
 
@@ -126,21 +136,28 @@ const CompanySelector = () => {
                   </div>
                 )}
 
-                <div className="mt-4">
-                  <div className="text-muted mb-2">
-                    <small>Valid codes: {CompanyStorage.VALID_COMPANIES.slice(0, 5).join(', ')}, etc.</small>
+                <div className="valid-companies">
+                  <div className="text-muted text-center">
+                    <small>Valid company codes:</small>
+                    <div className="mt-2">
+                      <code className="mr-2">demo</code>
+                      <code className="mr-2">test</code>
+                      <code className="mr-2">bizstack</code>
+                      <code>blitz</code>
+                    </div>
                   </div>
                   
                   {CompanyStorage.getRememberedCompany() && (
-                    <div className="mt-2">
-                      <small className="text-info d-block mb-2">
-                        Saved: {CompanyStorage.getRememberedCompany()}
+                    <div className="saved-company text-center">
+                      <small className="text-muted d-block mb-2">
+                        Saved company: <strong>{CompanyStorage.getRememberedCompany()}</strong>
                       </small>
                       <Button 
-                        theme="outline-secondary" 
+                        theme="light" 
                         size="sm"
                         onClick={handleForgetCompany}
                       >
+                        <i className="fas fa-times mr-1"></i>
                         Forget Saved Company
                       </Button>
                     </div>

@@ -1,0 +1,110 @@
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #0061f2 0%, #0044a9 100%);
+  padding: 2rem 0;
+}
+
+.auth-card {
+  border: none;
+  border-radius: 0.625rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.auth-card .card-header {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+  padding: 2rem 2rem 1rem;
+}
+
+.auth-card .card-body {
+  padding: 2rem;
+}
+
+.auth-logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.company-title {
+  color: #0061f2;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.company-subtitle {
+  color: #687281;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+}
+
+.form-control {
+  height: auto;
+  padding: 1rem 1.125rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.5rem;
+  border: 1px solid #e3e6ec;
+}
+
+.form-control:focus {
+  border-color: #0061f2;
+  box-shadow: 0 0 0 0.2rem rgba(0, 97, 242, 0.25);
+}
+
+.btn-primary {
+  background-color: #0061f2;
+  border-color: #0061f2;
+  padding: 0.75rem 1.125rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background-color: #0044a9;
+  border-color: #0044a9;
+}
+
+.remember-checkbox {
+  margin-bottom: 1rem;
+}
+
+.remember-checkbox .custom-control-label {
+  color: #687281;
+  font-size: 0.875rem;
+}
+
+.valid-companies {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e3e6ec;
+}
+
+.valid-companies .text-muted {
+  font-size: 0.875rem;
+  color: #687281 !important;
+}
+
+.saved-company {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f2f6fc;
+  border-radius: 0.5rem;
+}
+
+.saved-company small {
+  font-size: 0.875rem;
+}
+
+.alert {
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.loading-spinner {
+  color: #0061f2;
+}
