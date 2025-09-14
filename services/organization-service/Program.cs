@@ -63,7 +63,7 @@ builder.Services.AddDbContext<OrganizationDbContext>(options =>
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-// JWT Authentication
+// JWT Authentication (using same config as auth-service)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -73,9 +73,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            ValidIssuer = "BizStack-AuthService",
+            ValidAudience = "BizStack-Services",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("a2b7fca7d51c41f087f5c2a8b64e1d4c82d4b61c58af73b9a1731a6dbfae76b9"))
         };
     });
 
