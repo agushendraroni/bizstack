@@ -6,6 +6,17 @@
   justify-content: center;
 }
 
+/* Company header styling */
+.card-header.bg-primary h4,
+.card-header.bg-primary p {
+  color: white !important;
+}
+
+.card-header.bg-primary .opacity-75 {
+  opacity: 0.75 !important;
+  color: white !important;
+}
+
 .back-button {
   color: #687281 !important;
   background-color: transparent !important;

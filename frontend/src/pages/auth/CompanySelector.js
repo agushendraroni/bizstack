@@ -22,7 +22,9 @@ class CompanySelector extends React.Component {
       companyCode: "",
       rememberCompany: false,
       loading: false,
-      error: ""
+      error: "",
+      attemptCount: 0,
+      isBlocked: false
     };
   }
 
@@ -42,6 +44,11 @@ class CompanySelector extends React.Component {
     e.preventDefault();
     this.setState({ error: "" });
     
+    if (this.state.isBlocked) {
+      this.setState({ error: "Too many failed attempts. Please wait before trying again." });
+      return;
+    }
+    
     const companyCode = this.state.companyCode;
     if (!companyCode.trim()) return;
 
@@ -51,13 +58,33 @@ class CompanySelector extends React.Component {
     CompanyValidationService.getCompanyDetails(code)
       .then((companyDetails) => {
         if (!companyDetails.success) {
-          this.setState({
-            error: companyDetails.error || `Company "${code}" not found`,
-            loading: false
-          });
+          const newAttemptCount = this.state.attemptCount + 1;
+          let errorMessage = companyDetails.error || `Company "${code}" not found`;
+          
+          if (newAttemptCount >= 5) {
+            this.setState({
+              error: "Too many failed attempts. Access blocked for 1 minute.",
+              loading: false,
+              attemptCount: newAttemptCount,
+              isBlocked: true
+            });
+            setTimeout(() => {
+              this.setState({ isBlocked: false, attemptCount: 0 });
+            }, 60000); // 1 minute
+          } else {
+            errorMessage += ` (${newAttemptCount}/5 attempts)`;
+            this.setState({
+              error: errorMessage,
+              loading: false,
+              attemptCount: newAttemptCount
+            });
+          }
           return;
         }
 
+        // Reset attempt count on success
+        this.setState({ attemptCount: 0 });
+        
         if (this.state.rememberCompany) {
           CompanyStorage.setRememberedCompany(code);
           CompanyStorage.setCompanySettings(code, companyDetails.data);
@@ -69,9 +96,11 @@ class CompanySelector extends React.Component {
       })
       .catch((error) => {
         console.error('Company validation error:', error);
+        const newAttemptCount = this.state.attemptCount + 1;
         this.setState({
-          error: 'Failed to validate company. Please try again.',
-          loading: false
+          error: `Failed to validate company. Please try again. (${newAttemptCount}/5 attempts)`,
+          loading: false,
+          attemptCount: newAttemptCount
         });
       });
   }
@@ -134,7 +163,7 @@ class CompanySelector extends React.Component {
                       theme="primary" 
                       size="lg"
                       block
-                      disabled={!this.state.companyCode.trim() || this.state.loading}
+                      disabled={!this.state.companyCode.trim() || this.state.loading || this.state.isBlocked}
                     >
                       {this.state.loading ? (
                         <>

@@ -136,12 +136,6 @@ const Login = ({ history, match }) => {
                     <div className="text-muted mt-2">
                       <small>
                         Multi-tenant login for {companyInfo ? companyInfo.code : companyCode.toUpperCase()}
-                        {companyCode !== companyCode.toUpperCase() && (
-                          <div className="mt-1">
-                            <i className="fas fa-info-circle mr-1"></i>
-                            Entered: <code>{companyCode}</code> → Normalized: <code>{companyCode.toUpperCase()}</code>
-                          </div>
-                        )}
                       </small>
                     </div>
                   </div>
@@ -207,27 +201,10 @@ const Login = ({ history, match }) => {
                   </Form>
                 )}
 
-                {/* Default Credentials & Back Button */}
+                {/* Back Button */}
                 {companyInfo && (
                   <div className="mt-4">
-                    <div className="p-3 bg-light rounded">
-                      <h6 className="mb-2">
-                        <i className="fas fa-info-circle mr-2"></i>
-                        Default Credentials
-                      </h6>
-                      <div className="row">
-                        <div className="col-6">
-                          <small className="text-muted">Username:</small>
-                          <div><code>admin</code></div>
-                        </div>
-                        <div className="col-6">
-                          <small className="text-muted">Password:</small>
-                          <div><code>admin123</code></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="auth-actions mt-3">
+                    <div className="auth-actions">
                       <Button
                         theme="light"
                         className="back-button"

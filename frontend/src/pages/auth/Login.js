@@ -109,11 +109,7 @@ const Login = () => {
                 </Button>
               </Form>
 
-              <div className="text-center mt-3">
-                <small className="text-muted">
-                  Demo credentials: admin123 / admin123
-                </small>
-              </div>
+
             </CardBody>
           </Card>
         </Col>
