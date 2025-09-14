@@ -1,8 +1,9 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using OrganizationService.DTOs;
 using OrganizationService.Services;
+using System.Security.Claims;
 
 namespace OrganizationService.Controllers;
 
@@ -10,6 +11,7 @@ namespace OrganizationService.Controllers;
 [ApiVersion("1.0")]
 [Route("api/[controller]")]
 [Route("api/v{version:apiVersion}/[controller]")]
+[Authorize]
 public class CompaniesController : ControllerBase
 {
     private readonly ICompanyService _companyService;
@@ -35,6 +37,7 @@ public class CompaniesController : ControllerBase
     }
 
     [HttpGet("code/{code}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCompanyByCode(string code)
     {
         var result = await _companyService.GetCompanyByCodeAsync(code);
@@ -64,11 +67,13 @@ public class CompaniesController : ControllerBase
 
     private int? GetTenantId()
     {
-        return null;
+        var tenantIdClaim = User.FindFirst("TenantId")?.Value;
+        return int.TryParse(tenantIdClaim, out var tenantId) ? tenantId : null;
     }
 
     private Guid? GetUserId()
     {
-        return null;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 }
