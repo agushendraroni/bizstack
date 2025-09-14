@@ -144,7 +144,7 @@ namespace AuthService.Services
             return false;
         }
 
-        public async Task<bool> RegisterAsync(string username, string password, int tenantId = 0)
+        public async Task<bool> RegisterAsync(string username, string password, Guid? companyId = null)
         {
             if (await _context.Users.AnyAsync(u => u.Username == username))
                 return false;
@@ -153,7 +153,7 @@ namespace AuthService.Services
             {
                 Username = username,
                 PasswordHash = HashPassword(password),
-                TenantId = tenantId
+                TenantId = 1 // Default tenant
             };
 
             _context.Users.Add(user);
@@ -169,7 +169,7 @@ namespace AuthService.Services
             
             try
             {
-                var response = await httpClient.GetAsync($"{orgServiceUrl}/api/companies/by-code/{companyCode}");
+                var response = await httpClient.GetAsync($"{orgServiceUrl}/api/v1.0/companies/code/{companyCode}");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();

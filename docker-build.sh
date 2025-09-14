@@ -87,16 +87,48 @@ check_docker() {
     echo -e "${GREEN}✅ Docker and Docker Compose found${NC}"
 }
 
-check_port_conflicts() {
-    echo -e "${YELLOW}🔍 Checking for port conflicts...${NC}"
+get_service_ports() {
+    local service=$1
+    local ports=()
     
-    # Define ports used by BizStack
-    local ports=("3000" "4000" "5001" "5002" "5003" "5004" "5005" "5006" "5007" "5008" "5009" "5010" "5678" "5679")
+    case $service in
+        "auth-service") ports=("5001") ;;
+        "user-service") ports=("5002") ;;
+        "organization-service") ports=("5003") ;;
+        "product-service") ports=("5004") ;;
+        "customer-service") ports=("5005") ;;
+        "transaction-service") ports=("5006") ;;
+        "report-service") ports=("5007") ;;
+        "notification-service") ports=("5008") ;;
+        "file-storage-service") ports=("5009") ;;
+        "settings-service") ports=("5010") ;;
+        "graphql-mesh") ports=("4000") ;;
+        "frontend") ports=("3000") ;;
+        "postgres") ports=("5432") ;;
+        "n8n") ports=("5678" "5679") ;;
+        "all") ports=("3000" "4000" "5001" "5002" "5003" "5004" "5005" "5006" "5007" "5008" "5009" "5010" "5678" "5679") ;;
+        *) ports=() ;;
+    esac
+    
+    echo "${ports[@]}"
+}
+
+check_port_conflicts() {
+    local service=$1
+    echo -e "${YELLOW}🔍 Checking for port conflicts for $service...${NC}"
+    
+    # Get ports for the specific service
+    local ports=($(get_service_ports "$service"))
     local conflicts_found=false
+    
+    if [ ${#ports[@]} -eq 0 ]; then
+        echo -e "${GREEN}✅ No ports to check for $service${NC}"
+        return 0
+    fi
     
     for port in "${ports[@]}"; do
         if netstat -tulpn 2>/dev/null | grep -q ":$port "; then
-            echo -e "${YELLOW}⚠️  Port $port is in use${NC}"
+            echo -e "${YELLOW}⚠️  Port $port is in use by $service${NC}"
             
             # Try to kill processes using the port
             if command -v fuser &> /dev/null; then
@@ -118,12 +150,17 @@ check_port_conflicts() {
     done
     
     if [ "$conflicts_found" = true ]; then
-        echo -e "${YELLOW}⚠️  Some port conflicts detected. Stopping all containers first...${NC}"
-        docker-compose down 2>/dev/null || true
+        if [[ "$service" == "all" ]]; then
+            echo -e "${YELLOW}⚠️  Some port conflicts detected. Stopping all containers first...${NC}"
+            docker-compose down 2>/dev/null || true
+        else
+            echo -e "${YELLOW}⚠️  Port conflicts detected for $service. Stopping service container...${NC}"
+            docker-compose stop "$service" 2>/dev/null || true
+        fi
         sleep 3
     fi
     
-    echo -e "${GREEN}✅ Port conflict check completed${NC}"
+    echo -e "${GREEN}✅ Port conflict check completed for $service${NC}"
 }
 
 validate_service() {
@@ -282,7 +319,7 @@ main() {
     check_docker
     
     # Check for port conflicts
-    check_port_conflicts
+    check_port_conflicts "$service"
     
     # Show current status
     echo -e "${BLUE}📊 Current Status:${NC}"
